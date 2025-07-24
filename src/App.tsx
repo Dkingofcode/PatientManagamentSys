@@ -25,12 +25,12 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LabTechnicianDashboard />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route>
           {/* Protected routes */}
-          <Route path="/front-desk" element={<FrontDeskDashboard />} />
+          <Route path="/" element={<FrontDeskDashboard />} />
           <Route path="/doctor" element={<DoctorDashboard />} />
-          {/* <Route path="/lab-technician" element={<LabTechnicianDashboard />} /> */}
+          <Route path="/lab-technician" element={<LabTechnicianDashboard />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/patient" element={<PatientDashboard />} />
         </Route>

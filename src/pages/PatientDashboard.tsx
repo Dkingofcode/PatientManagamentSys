@@ -165,7 +165,7 @@ function PatientDashboard() {
                       </span>
                       <button
                         onClick={() => handleViewResults(result.id)}
-                        className="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        className="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-600 transition-colors"
                       >
                         <Eye size={16} />
                         <span>View</span>
@@ -180,8 +180,9 @@ function PatientDashboard() {
 
         {/* 2FA Modal */}
         {show2FA && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg max-w-md w-full mx-4">
+          <div className="fixed inset-0 bg-white bg-opacity-1 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg max-w-md w-full mx-4 border-[2px] border-blue-600 shadow-lg">
+
               <div className="p-6 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900 flex items-center">
                   <Shield size={20} className="mr-2" />
@@ -219,11 +220,11 @@ function PatientDashboard() {
                     Cancel
                   </button>
                   <button
-                    onClick={verify2FA}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    Verify & Access
-                  </button>
+                      onClick={verify2FA}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      Verify & Access
+                    </button>
                 </div>
               </div>
             </div>

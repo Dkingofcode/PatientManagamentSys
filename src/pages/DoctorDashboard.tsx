@@ -127,7 +127,7 @@ function DoctorDashboard() {
   };
 
   return (
-    <Layout title="Doctor Dashboard">
+    <Layout title="">
       <div className="space-y-6">
         {/* Header */}
         <div>

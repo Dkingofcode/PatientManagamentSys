@@ -190,7 +190,7 @@ function LabTechnicianDashboard() {
   };
 
   return (
-    <Layout title="Lab Technician Dashboard">
+    <Layout title="">
       <div className="space-y-6">
         {/* Header with Notifications */}
         <div className="flex justify-between items-start">
@@ -199,15 +199,15 @@ function LabTechnicianDashboard() {
             <p className="text-gray-600 mt-1">Manage test assignments and laboratory operations</p>
           </div>
           <div className="flex items-center space-x-4">
-            <button className="relative p-2 text-gray-400 hover:text-gray-500 transition-colors">
+            {/* <button className="relative p-2 text-gray-400 hover:text-gray-500 transition-colors">
               <Bell size={20} />
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                 {notifications.filter(n => !n.read).length}
               </span>
-            </button>
-            <button className="p-2 text-gray-400 hover:text-gray-500 transition-colors">
+            </button> */}
+            {/* <button className="p-2 text-gray-400 hover:text-gray-500 transition-colors">
               <Settings size={20} />
-            </button>
+            </button> */}
           </div>
         </div>
 
