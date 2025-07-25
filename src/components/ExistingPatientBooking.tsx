@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppointments } from '../contexts/AppointmentContext';
 // import { useNotifications } from '../contexts/NotificationContext';
-import { Search, User, Calendar, Clock, FileText, CheckCircle, CreditCard, Banknote, ArrowLeftRight, Calculator } from 'lucide-react';
+import { Search, User,  CheckCircle, CreditCard, Banknote, ArrowLeftRight, Calculator } from 'lucide-react';
 import TestSelectionStep from './registration/TestSelectionStep';
 import DoctorSelectionStep from './registration/DoctorSelectionStep';
 
@@ -55,13 +55,13 @@ function ExistingPatientBooking({ onClose, preSelectedPatient }: ExistingPatient
 
   // Payment method options
   const paymentOptions = [
-    { id: 'cash', label: 'Cash', icon: Banknote, color: 'bg-green-500' },
+    { id: 'cash', label: 'Cash', icon: Banknote, color: 'bg-grey-700' },
     { id: 'pos', label: 'POS/Card', icon: CreditCard, color: 'bg-blue-500' },
-    { id: 'transfer', label: 'Bank Transfer', icon: ArrowLeftRight, color: 'bg-purple-500' },
-    { id: 'cash-transfer', label: 'Cash + Transfer', icon: ArrowLeftRight, color: 'bg-indigo-500' },
-    { id: 'pos-transfer', label: 'POS + Transfer', icon: CreditCard, color: 'bg-cyan-500' },
-    { id: 'pos-cash', label: 'POS + Cash', icon: Banknote, color: 'bg-teal-500' },
-    { id: 'credit', label: 'Credit', icon: Calculator, color: 'bg-orange-500' },
+    { id: 'transfer', label: 'Bank Transfer', icon: ArrowLeftRight, color: 'bg-grey-700' },
+    { id: 'cash-transfer', label: 'Cash + Transfer', icon: ArrowLeftRight, color: 'bg-grey-700' },
+    { id: 'pos-transfer', label: 'POS + Transfer', icon: CreditCard, color: 'bg-grey-700' },
+    { id: 'pos-cash', label: 'POS + Cash', icon: Banknote, color: 'bg-grey-700' },
+    { id: 'credit', label: 'Credit', icon: Calculator, color: 'bg-grey-700' },
   ];
 
   const handlePaymentMethodToggle = (methodId: string) => {
@@ -225,7 +225,7 @@ function ExistingPatientBooking({ onClose, preSelectedPatient }: ExistingPatient
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-6 py-2 bg-purple-800 text-white rounded-lg hover:bg-purple-900 transition-colors"
           >
             Close
           </button>
@@ -251,25 +251,25 @@ function ExistingPatientBooking({ onClose, preSelectedPatient }: ExistingPatient
       <div className="flex items-center justify-center mb-6">
         <div className="flex items-center space-x-4">
           <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-            currentStep >= 1 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+            currentStep >= 1 ? 'bg-purple-800 text-white' : 'bg-gray-200 text-gray-600'
           }`}>
             1
           </div>
-          <div className={`w-12 h-0.5 ${currentStep > 1 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+          <div className={`w-12 h-0.5 ${currentStep > 1 ? 'bg-purple-800' : 'bg-gray-200'}`} />
           <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-            currentStep >= 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+            currentStep >= 2 ? 'bg-purple-800 text-white' : 'bg-gray-200 text-gray-600'
           }`}>
             2
           </div>
           <div className={`w-12 h-0.5 ${currentStep > 2 ? 'bg-blue-600' : 'bg-gray-200'}`} />
           <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-            currentStep >= 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+            currentStep >= 3 ? 'bg-purple-800 text-white' : 'bg-gray-200 text-gray-600'
           }`}>
             3
           </div>
-          <div className={`w-12 h-0.5 ${currentStep > 3 ? 'bg-blue-600' : 'bg-gray-200'}`} />
+          <div className={`w-12 h-0.5 ${currentStep > 3 ? 'bg-purple-800' : 'bg-gray-200'}`} />
           <div className={`flex items-center justify-center w-8 h-8 rounded-full ${
-            currentStep >= 4 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+            currentStep >= 4 ? 'bg-purple-800 text-white' : 'bg-gray-200 text-gray-600'
           }`}>
             4
           </div>
@@ -483,7 +483,7 @@ function ExistingPatientBooking({ onClose, preSelectedPatient }: ExistingPatient
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Amount Paid</p>
-                  <p className="text-lg font-bold text-green-600">${getTotalPaid()}</p>
+                  <p className="text-lg font-bold text-purple-800">${getTotalPaid()}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Remaining</p>
@@ -506,7 +506,7 @@ function ExistingPatientBooking({ onClose, preSelectedPatient }: ExistingPatient
               <button
                 onClick={completeBooking}
                 disabled={getTotalPaid() + creditAmount < getTotalAmount()}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2 bg-purple-800 text-white rounded-lg hover:bg-purple-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Complete Booking
               </button>

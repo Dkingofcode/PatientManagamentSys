@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import type { RegistrationData } from '../../pages/PatientRegistration';
 import { useAppointments } from '../../contexts/AppointmentContext';
-import { CreditCard, Banknote, ArrowLeftRight, Calculator } from 'lucide-react';
+//import { CreditCard, Banknote, ArrowLeftRight, Calculator } from 'lucide-react';
 
 interface PaymentMethodStepProps {
   data: Partial<RegistrationData>;
@@ -22,7 +22,7 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
 
   // Calculate pricing based on category
   const getCurrentTestPrice = (test: any) => {
-    const category = data.category;
+   // const category = data.category;
     return getTestPrice(test.id,  'walk-in');
   };
 

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useAppointments } from '../../contexts/AppointmentContext';
+//import { useAppointments } from '../../contexts/AppointmentContext';
 import type { RegistrationData } from '../../pages/PatientRegistration';
-import { CreditCard, Banknote, ArrowLeftRight, Calculator, Receipt, DollarSign } from 'lucide-react';
+import { CreditCard, Banknote, ArrowLeftRight, Calculator, Receipt } from 'lucide-react';
 //import initialPaymentData from "../../pages/PatientRegistration"
 
 
@@ -83,14 +83,14 @@ const {
     paymentAmounts = {},
     creditAmount = 0,
     totalAmount = 0,
-    totalPaid = 0,
-    remainingBalance = 0
+   // totalPaid = 0,
+   // remainingBalance = 0
   } = paymentData;
 
-  const [discountAmount, setDiscountAmount] = useState(0);
-  const [discountPercent, setDiscountPercent] = useState(0);
-  const [subtotal, setSubtotal] = useState(0);
-  const [remainingAmount, setRemainingAmount] = useState(0);
+  const [discountAmount] = useState(0);
+  const [discountPercent] = useState(0);
+  const [subtotal] = useState(0);
+  const [remainingAmount] = useState(0);
 
   const getCurrentTestPrice = (test: any) => {
     return test.prices[data.category || 'walk-in'] || test.prices['walk-in'];
@@ -146,7 +146,7 @@ const {
       discount: discountAmount,
       finalAmount: totalAmount,
       creditAmount,
-      processedBy: user?.name,
+      processedBy:  'Unknown',
       processedAt: new Date().toISOString(),
     };
 
@@ -324,7 +324,7 @@ const {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-blue-700">Processed by:</span>
-            <span className="ml-2 font-medium text-blue-900">{user?.name} ({user?.employeeId})</span>
+            <span className="ml-2 font-medium text-blue-900">{'unknown'} ({user?.employeeId})</span>
           </div>
           <div>
             <span className="text-blue-700">Date & Time:</span>

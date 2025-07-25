@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import  { createContext, useContext, useState } from 'react';
 import type { ReactNode } from 'react';
 
 export interface Notification {
@@ -52,10 +52,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// export function useNotifications() {
-//   const context = useContext(NotificationContext);
-//   if (context === undefined) {
-//     throw new Error('useNotifications must be used within a NotificationProvider');
-//   }
-//   return context;
-// }
+export function useNotifications() {
+  const context = useContext(NotificationContext);
+  if (context === undefined) {
+    throw new Error('useNotifications must be used within a NotificationProvider');
+  }
+  return context;
+}

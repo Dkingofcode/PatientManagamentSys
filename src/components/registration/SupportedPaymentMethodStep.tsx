@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import type { RegistrationData } from '../../pages/PatientRegistration';
 import { useAppointments } from '../../contexts/AppointmentContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,7 +20,7 @@ function SupportedPaymentMethodsStep({ data, updateData, onNext, onPrev }: Suppo
 
   // Calculate pricing based on category
   const getCurrentTestPrice = (test: any) => {
-    const category = data.category;
+    //const category = data.category;
     return getTestPrice(test.id, 'walk-in');
   };
 
@@ -152,7 +152,7 @@ function SupportedPaymentMethodsStep({ data, updateData, onNext, onPrev }: Suppo
       totalAmount,
       totalPaid: getTotalPaid(),
       remainingBalance: getRemainingBalance(),
-      processedBy: user?.name,
+      processedBy: 'unknown',
       processedById: user?.id,
       processedAt: new Date().toISOString(),
     };
@@ -173,7 +173,7 @@ function SupportedPaymentMethodsStep({ data, updateData, onNext, onPrev }: Suppo
         totalAmount,
         totalPaid: getTotalPaid(),
         remainingBalance: getRemainingBalance(),
-        processedBy: user?.name,
+        processedBy: "onknown",
         processedById: user?.id,
         processedAt: new Date().toISOString(),
       };
@@ -354,7 +354,7 @@ function SupportedPaymentMethodsStep({ data, updateData, onNext, onPrev }: Suppo
             </div>
             <div>
               <span className="text-blue-700">Processed By:</span>
-              <span className="ml-2 font-medium text-blue-900">{user?.name} (ID: {user?.id})</span>
+              <span className="ml-2 font-medium text-blue-900">{"unknoown"} (ID: {user?.id})</span>
             </div>
             <div>
               <span className="text-blue-700">Total Transaction:</span>

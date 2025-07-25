@@ -1,4 +1,4 @@
-import React from 'react';
+//import React from 'react';
 import Layout from '../components/Layout';
 import { useAppointments } from '../contexts/AppointmentContext';
 //import { useAuth } from '../contexts/AuthContext';
@@ -21,28 +21,28 @@ function AdminDashboard() {
       label: 'Total Patients',
       value: patients.length,
       icon: Users,
-      color: 'bg-blue-500',
+      color: 'bg-gray-700',
       change: '+12%',
     },
     {
       label: 'Today\'s Appointments',
       value: todayAppointments.length,
       icon: Calendar,
-      color: 'bg-green-500',
+      color: 'bg-gray-700',
       change: '+8%',
     },
     {
       label: 'Tests Completed',
       value: appointments.filter(apt => apt.status === 'completed').length,
       icon: FlaskConical,
-      color: 'bg-purple-500',
+      color: 'bg-gray-700',
       change: '+15%',
     },
     {
       label: 'Revenue',
       value: `$${totalRevenue.toLocaleString()}`,
       icon: DollarSign,
-      color: 'bg-orange-500',
+      color: 'bg-gray-700',
       change: '+23%',
     },
   ];
@@ -138,7 +138,7 @@ function AdminDashboard() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">System Status</span>
-                  <span className="text-sm font-medium text-green-600">Operational</span>
+                  <span className="text-sm font-medium text-blue-600">Operational</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Active Users</span>

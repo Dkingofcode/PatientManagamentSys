@@ -7,7 +7,7 @@ import { Clock, Users, TestTube, FileCheck, Search, Filter, User, Calendar, Refr
 
 function DoctorDashboard() {
  // const { user } = useAuth();
-  const { appointments, patients, updateAppointment, rescheduleAppointment, doctors } = useAppointments();
+  const { appointments, patients, updateAppointment, rescheduleAppointment } = useAppointments();
  // const { addNotification } = useNotifications();
   
   console.log('Doctor Dashboard - User:',);
@@ -66,7 +66,7 @@ function DoctorDashboard() {
 
   const submitReschedule = (newDate: string, newTime: string, reason: string) => {
     if (selectedAppointment) {
-      const patient = patients.find(p => p.id === selectedAppointment.patientId);
+   //   const patient = patients.find(p => p.id === selectedAppointment.patientId);
       
       rescheduleAppointment(selectedAppointment.id, newDate, newTime, reason);
       
@@ -83,7 +83,7 @@ function DoctorDashboard() {
 
   const approveAndForwardToLab = (labTechnicianId?: string) => {
     if (selectedAppointment) {
-      const patient = patients.find(p => p.id === selectedAppointment.patientId);
+      //const patient = patients.find(p => p.id === selectedAppointment.patientId);
       
       updateAppointment(selectedAppointment.id, {
         doctorApproved: true,
@@ -106,7 +106,7 @@ function DoctorDashboard() {
 
   const approveResults = (signature: string, comments: string) => {
     if (selectedAppointment) {
-      const patient = patients.find(p => p.id === selectedAppointment.patientId);
+     // const patient = patients.find(p => p.id === selectedAppointment.patientId);
       
       updateAppointment(selectedAppointment.id, {
         status: 'completed',
@@ -143,8 +143,8 @@ function DoctorDashboard() {
                 <p className="text-sm text-gray-600">Pending Requests</p>
                 <p className="text-3xl font-bold text-gray-900">{pendingRequests}</p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <Clock size={24} className="text-orange-600" />
+              <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+                <Clock size={24} className="text-gray-300" />
               </div>
             </div>
           </div>
@@ -155,8 +155,8 @@ function DoctorDashboard() {
                 <p className="text-sm text-gray-600">Assigned Tests</p>
                 <p className="text-3xl font-bold text-gray-900">{assignedTests}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Users size={24} className="text-blue-600" />
+              <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+                <Users size={24} className="text-gray-300" />
               </div>
             </div>
           </div>
@@ -167,8 +167,8 @@ function DoctorDashboard() {
                 <p className="text-sm text-gray-600">Awaiting Results</p>
                 <p className="text-3xl font-bold text-gray-900">{awaitingResults}</p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <TestTube size={24} className="text-purple-600" />
+              <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+                <TestTube size={24} className="text-gray-300" />
               </div>
             </div>
           </div>
@@ -179,8 +179,8 @@ function DoctorDashboard() {
                 <p className="text-sm text-gray-600">For Approval</p>
                 <p className="text-3xl font-bold text-gray-900">{forApproval}</p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                <FileCheck size={24} className="text-orange-600" />
+              <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+                <FileCheck size={24} className="text-gray-300" />
               </div>
             </div>
           </div>

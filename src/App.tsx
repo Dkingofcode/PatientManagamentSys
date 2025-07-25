@@ -1,10 +1,10 @@
 // src/App.tsx
-import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { setUserFromStorage } from './store/authSlice';
+//import { useEffect } from 'react';
+//import { useDispatch } from 'react-redux';
+//import { setUserFromStorage } from './store/authSlice';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 //import LoginPage from './pages/LoginPage';
-import PrivateRoute from './components/ProtectedRoute';
+//import PrivateRoute from './components/ProtectedRoute';
 // Import your other pages here
 import FrontDeskDashboard from './pages/FrontDeskDashboard';
 import LoginPage from './pages/LoginPage';
@@ -15,12 +15,12 @@ import PatientDashboard from './pages/PatientDashboard';
 
 
 function App() {
-  const dispatch = useDispatch();
+  //const dispatch = useDispatch();
 
-  useEffect(() => {
-    // Check if user is logged in from localStorage
-    dispatch(setUserFromStorage());
-  }, [dispatch]);
+  // useEffect(() => {
+  //   // Check if user is logged in from localStorage
+  //   dispatch(setUserFromStorage());
+  // }, [dispatch]);
 
   return (
     <Router>

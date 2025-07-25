@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 //import { useAuth } from '../../contexts/AuthContext';
 import { useAppointments } from '../../contexts/AppointmentContext';
 import type{ RegistrationData } from '../../pages/PatientRegistration';
@@ -20,7 +20,7 @@ function PaymentMethodSelection({ data, updateData, onComplete, onBack }: Paymen
 
   // Calculate pricing based on category
   const getCurrentTestPrice = (test: any) => {
-    const category = data.category;
+   // const category = data.category;
     return getTestPrice(test.id,
     "walk-in");
   };

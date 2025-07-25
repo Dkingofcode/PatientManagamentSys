@@ -1,4 +1,4 @@
-import React from 'react';
+//import React from 'react';
 import type { RegistrationData } from '../../pages/PatientRegistration';
 import { useAppointments } from '../../contexts/AppointmentContext';
 import { CheckCircle, User, Calendar, Clock, FileText, ArrowLeft, Download, QrCode } from 'lucide-react';

@@ -1,46 +1,46 @@
-// import React from 'react';
-// import { Navigate } from 'react-router-dom';
-// import { useAuth } from '../contexts/AuthContext';
-// import type { UserRole } from '../contexts/AuthContext';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import type { UserRole } from '../contexts/AuthContext';
 
-// interface ProtectedRouteProps {
-//   children: React.ReactNode;
-//   allowedRoles: UserRole[];
-// }
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  allowedRoles: UserRole[];
+}
 
-// function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
-//   const { user, isAuthenticated } = useAuth();
+function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+  const { user, isAuthenticated } = useAuth();
 
-//   if (!isAuthenticated) {
-//     return <Navigate to="/login" replace />;
-//   }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
-//   if (user && !allowedRoles.includes(user.role)) {
-//     // Redirect to their appropriate dashboard
-//     const roleRoutes = {
-//       'front-desk': '/front-desk',
-//       'doctor': '/doctor',
-//       'lab-technician': '/lab-technician',
-//       'admin': '/admin',
-//       'patient': '/patient',
-//     };
-//     return <Navigate to={roleRoutes[user.role]} replace />;
-//   }
+  if (user && !allowedRoles.includes(user.role)) {
+    // Redirect to their appropriate dashboard
+    const roleRoutes = {
+      'front-desk': '/front-desk',
+      'doctor': '/doctor',
+      'lab-technician': '/lab-technician',
+      'admin': '/admin',
+      'patient': '/patient',
+    };
+    return <Navigate to={roleRoutes[user.role]} replace />;
+  }
 
-//   return <>{children}</>;
-// }
+  return <>{children}</>;
+}
 
-// export default ProtectedRoute;
+export default ProtectedRoute;
 
-// src/components/PrivateRoute.tsx
-import { useSelector } from 'react-redux';
-import { Navigate, Outlet } from 'react-router-dom';
-import type { RootState } from '../store/store';
+// // src/components/PrivateRoute.tsx
+// import { useSelector } from 'react-redux';
+// import { Navigate, Outlet } from 'react-router-dom';
+// import type { RootState } from '../store/store';
 
-const PrivateRoute = () => {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+// const PrivateRoute = () => {
+//   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   
-  return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
-};
+//   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+// };
 
-export default PrivateRoute;
+// export default PrivateRoute;
