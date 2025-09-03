@@ -2,6 +2,7 @@
 import type { RegistrationData } from '../../pages/PatientRegistration';
 import { useAppointments } from '../../contexts/AppointmentContext';
 import { CheckCircle, User, Calendar, Clock, FileText, ArrowLeft, Download, QrCode } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface RegistrationSuccessProps {
   patientId: string;
@@ -10,38 +11,41 @@ interface RegistrationSuccessProps {
   onBackToDashboard: () => void;
 }
 
+// ✅ Helper to safely parse prices
+const parsePrice = (value: any): number => {
+  if (!value) return 0;
+  return Number(String(value).replace(/[₦,]/g, "")) || 0;
+};
+
 function RegistrationSuccess({ 
   patientId, 
   appointmentId, 
   registrationData, 
-  onBackToDashboard 
 }: RegistrationSuccessProps) {
   const { doctors } = useAppointments();
-  
+  const navigate = useNavigate();
   const selectedDoctor = doctors.find(d => d.id === registrationData.doctorId);
+
+  // ✅ Safe total calculation
   const totalPrice = registrationData.tests?.reduce((sum, test) => {
-  const patientCategory = registrationData.patient?.category || 'walk-in';
-  const price = test.prices[patientCategory] || test.basePrice;
-  return sum + price;
-}, 0) || 0;
+    return sum + parsePrice(test.price);
+  }, 0) || 0;
 
   const generateQRCode = () => {
-    // In a real app, this would generate an actual QR code
     alert(`QR Code generated for Patient ID: ${patientId}`);
   };
 
   const downloadSummary = () => {
-    // In a real app, this would generate and download a PDF
     alert('Registration summary downloaded!');
   };
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden">
       {/* Success Header */}
-      <div className="bg-gradient-to-r from-green-500 to-green-600 px-8 py-6">
+      <div className="bg-gradient-to-r from-purple-500 to-purple-600 px-8 py-6">
         <div className="flex items-center justify-center">
           <div className="bg-white rounded-full p-3 mr-4">
-            <CheckCircle size={32} className="text-green-500" />
+            <CheckCircle size={32} className="text-blue-500" />
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold text-white">Registration Successful!</h1>
@@ -57,7 +61,7 @@ function RegistrationSuccess({
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-2">Patient ID Generated</h2>
               <div className="flex items-center space-x-3">
-                <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-mono text-lg font-bold">
+                <div className="bg-purple-600 text-white px-4 py-2 rounded-lg font-mono text-lg font-bold">
                   {patientId}
                 </div>
                 <button
@@ -150,13 +154,18 @@ function RegistrationSuccess({
                   <p className="text-sm text-gray-500">{test.duration} minutes</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">${test.prices["corporate"]}</p>
+                  {/* ✅ Safe price display */}
+                  <p className="font-semibold text-gray-900">
+                    ₦{parsePrice(test.price).toLocaleString()}
+                  </p>
                 </div>
               </div>
             ))}
             <div className="flex items-center justify-between pt-3 border-t border-gray-300">
               <p className="text-lg font-semibold text-gray-900">Total Amount</p>
-              <p className="text-xl font-bold text-green-600">${totalPrice}</p>
+              <p className="text-xl font-bold text-purple-700">
+                ₦{totalPrice.toLocaleString()}
+              </p>
             </div>
           </div>
         </div>
@@ -187,7 +196,7 @@ function RegistrationSuccess({
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4">
           <button
-            onClick={onBackToDashboard}
+            onClick={() => navigate("/front-desk")}
             className="flex items-center justify-center space-x-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             <ArrowLeft size={20} />
@@ -204,7 +213,7 @@ function RegistrationSuccess({
           
           <button
             onClick={() => window.print()}
-            className="flex items-center justify-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="flex items-center justify-center space-x-2 px-6 py-3 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors"
           >
             <FileText size={20} />
             <span>Print Details</span>

@@ -37,7 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('https://pms-backend-postgresql.onrender.com/api/auth/login', {
+      // const response = await axios.post('https://pms-backend-postgresql.onrender.com/api/auth/login', {
+      //   identifier,
+      //   password,
+      // });
+
+       const response = await axios.post('https://pms-backend-postgresql.onrender.com/api/auth/login', {
         identifier,
         password,
       });
@@ -49,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(token);
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      console.log(token);
       console.log(user);
       console.log("Attempting login", { identifier, password });
       return true;

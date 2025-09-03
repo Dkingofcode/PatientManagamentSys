@@ -2,6 +2,7 @@ import  { useState } from 'react';
 import type { RegistrationData } from '../../pages/PatientRegistration';
 import { useAppointments } from '../../contexts/AppointmentContext';
 //import { CreditCard, Banknote, ArrowLeftRight, Calculator } from 'lucide-react';
+//import { getTestPrice } from '../../utils/getTestPrice';
 
 interface PaymentMethodStepProps {
   data: Partial<RegistrationData>;
@@ -11,7 +12,7 @@ interface PaymentMethodStepProps {
 }
 
 function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodStepProps) {
-  const { getTestPrice, getDiscountPercent } = useAppointments();
+  const {  getDiscountPercent } = useAppointments();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>(
     data.paymentMethods?.[0] || ''
   );
@@ -21,12 +22,12 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
   const [creditAmount, setCreditAmount] = useState(data.creditAmount || 0);
 
   // Calculate pricing based on category
-  const getCurrentTestPrice = (test: any) => {
-   // const category = data.category;
-    return getTestPrice(test.id,  'walk-in');
-  };
+  // const getCurrentTestPrice = (test: any) => {
+  //  // const category = data.category;
+  //   return getTestPrice(test.id,  'walk-in');
+  // };
 
-  const subtotal = data.tests?.reduce((sum, test) => sum + getCurrentTestPrice(test), 0) || 0;
+  const subtotal = data.tests?.reduce((sum, test) => sum + test.price, 0) || 0;
   const discountPercent = getDiscountPercent( 'walk-in');
   const discountAmount = subtotal * (discountPercent / 100);
   const totalAmount = subtotal - discountAmount;
@@ -157,12 +158,12 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
             <div key={index} className="flex justify-between items-center">
               <span className="text-gray-700">{test.name}</span>
               <div className="flex items-center space-x-2">
-                {getCurrentTestPrice(test) !== test.prices['walk-in'] && (
+                {test.price !== test.prices['walk-in'] && (
                   <span className="line-through text-gray-400 text-sm">
                     ${test.prices['walk-in']}
                   </span>
                 )}
-                <span className="font-medium">${getCurrentTestPrice(test)}</span>
+                <span className="font-medium">${test.price}</span>
               </div>
             </div>
           ))}

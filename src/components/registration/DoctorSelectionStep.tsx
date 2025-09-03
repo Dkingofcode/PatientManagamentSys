@@ -1,4 +1,4 @@
-import  { useState } from 'react';
+import { useState } from 'react';
 import type { RegistrationData } from '../../pages/PatientRegistration';
 import { useAppointments } from '../../contexts/AppointmentContext';
 import { Calendar, Clock } from 'lucide-react';
@@ -16,6 +16,9 @@ function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSel
   const [selectedDoctor, setSelectedDoctor] = useState(data.doctorId || '');
   const [selectedDate, setSelectedDate] = useState(data.appointmentDate || '');
   const [selectedTime, setSelectedTime] = useState(data.appointmentTime || '');
+
+  // NEW: Lab & X-ray multi-select
+  const [selectedServices, setSelectedServices] = useState<string[]>(data.tests?.map(t => t.id) || []);
 
   const availableTimes = [
     '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -37,12 +40,25 @@ function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSel
     updateData({ appointmentTime: time });
   };
 
+  // NEW: Handle Lab/X-ray toggle
+  const handleServiceToggle = (service: { id: string, name: string }) => {
+    let updatedServices;
+    if (selectedServices.includes(service.id)) {
+      updatedServices = selectedServices.filter(s => s !== service.id);
+    } else {
+      updatedServices = [...selectedServices, service.id];
+    }
+    setSelectedServices(updatedServices);
+    // updateData({ tests: updatedServices.map(id => ({ id, name: serviceOptions.find(s => s.id === id)?.name || '' })) });
+  };
+
   const handleComplete = () => {
     if (selectedDoctor && selectedDate && selectedTime) {
       updateData({
         doctorId: selectedDoctor,
         appointmentDate: selectedDate,
         appointmentTime: selectedTime,
+//        tests: selectedServices.map(id => ({ id, name: serviceOptions.find(s => s.id === id)?.name || '' }))
       });
       onComplete();
     }
@@ -50,7 +66,13 @@ function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSel
 
   const isCompleteEnabled = selectedDoctor && selectedDate && selectedTime;
 
-  // Get tomorrow as minimum date
+  // NEW: Service options for multi-select
+  const serviceOptions = [
+    { id: 'sonography', name: 'Sonography' },
+    { id: 'xray', name: 'Radiography' },
+    { id: 'lab', name: 'Lab' }
+  ];
+
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split('T')[0];
@@ -72,7 +94,7 @@ function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSel
               onClick={() => doctor.availability && handleDoctorSelect(doctor.id)}
               className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
                 selectedDoctor === doctor.id
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-purple-500 bg-purple-50'
                   : doctor.availability
                   ? 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                   : 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-75'
@@ -92,15 +114,6 @@ function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSel
                 <div className="flex-1">
                   <h4 className="font-semibold text-gray-900">{doctor.name}</h4>
                   <p className="text-sm text-gray-600">{doctor.specialty}</p>
-                  <div className="flex items-center mt-1">
-                    {doctor.availability ? (
-                      <span className="text-xs text-green-600 font-medium">🟢 Available</span>
-                    ) : (
-                      <span className="text-xs text-red-600 font-medium">
-                        🔴 Next available: {doctor.nextAvailable}
-                      </span>
-                    )}
-                  </div>
                 </div>
                 {selectedDoctor === doctor.id && (
                   <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
@@ -113,10 +126,36 @@ function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSel
         </div>
       </div>
 
+      {/* NEW: Lab & X-ray Multi-Select */}
+      {selectedDoctor && (
+        <div className="mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Services</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {serviceOptions.map(service => (
+              <div
+                key={service.id}
+                onClick={() => handleServiceToggle(service)}
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  selectedServices.includes(service.id)
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <h4 className="font-semibold text-gray-900">{service.name}</h4>
+                {selectedServices.includes(service.id) && (
+                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-2">
+                    <span className="text-white text-xs">✓</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Date and Time Selection */}
       {selectedDoctor && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-          {/* Date Selection */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <Calendar size={20} className="mr-2" />
@@ -130,8 +169,6 @@ function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSel
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-
-          {/* Time Selection */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <Clock size={20} className="mr-2" />
@@ -165,7 +202,7 @@ function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSel
             <p><strong>Doctor:</strong> {doctors.find(d => d.id === selectedDoctor)?.name}</p>
             <p><strong>Date:</strong> {new Date(selectedDate).toLocaleDateString()}</p>
             <p><strong>Time:</strong> {selectedTime}</p>
-            <p><strong>Tests:</strong> {data.tests?.map(t => t.name).join(', ')}</p>
+            <p><strong>Tests:</strong> {selectedServices.map(id => serviceOptions.find(s => s.id === id)?.name).join(', ')}</p>
           </div>
         </div>
       )}

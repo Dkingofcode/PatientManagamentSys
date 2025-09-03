@@ -15,7 +15,7 @@ function PatientCategoryStep({ data, updateData, onNext }: PatientCategoryStepPr
       label: 'Walk-in',
       description: 'Patient without appointment',
       icon: Users,
-      color: 'bg-blue-500',
+      color: 'bg-gray-700',
       discount: 0,
     },
     {
@@ -23,7 +23,7 @@ function PatientCategoryStep({ data, updateData, onNext }: PatientCategoryStepPr
       label: 'Referred',
       description: 'Referred by another patient',
       icon: UserCheck,
-      color: 'bg-green-500',
+      color: 'bg-gray-700',
       discount: 10,
     },
     {
@@ -31,7 +31,7 @@ function PatientCategoryStep({ data, updateData, onNext }: PatientCategoryStepPr
       label: 'Hospital',
       description: 'Hospital patient',
       icon: Hospital,
-      color: 'bg-red-500',
+      color: 'bg-gray-700',
       discount: 20,
     },
     {
@@ -39,15 +39,15 @@ function PatientCategoryStep({ data, updateData, onNext }: PatientCategoryStepPr
       label: 'HMO',
       description: 'Health Maintenance Organization',
       icon: Shield,
-      color: 'bg-indigo-500',
+      color: 'bg-gray-700',
       discount: 30,
     },
     {
-      id: 'staff',
-      label: 'Staff',
-      description: 'Hospital staff member',
+      id: 'corporate',
+      label: 'Corporate',
+      description: 'Corporate employee',
       icon: Stethoscope,
-      color: 'bg-purple-500',
+      color: 'bg-gray-700',
       discount: 50,
     },
   ];
@@ -74,7 +74,7 @@ function PatientCategoryStep({ data, updateData, onNext }: PatientCategoryStepPr
               onClick={() => handleCategorySelect(category.id)}
               className={`p-6 rounded-lg border-2 transition-all ${
                 isSelected
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-purple-500 bg-blue-50'
                   : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
               }`}
             >

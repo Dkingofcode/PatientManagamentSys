@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
 //mport { useAuth } from '../contexts/AuthContext';
+
 import { useAppointments } from '../contexts/AppointmentContext';
 // import { useNotifications } from '../contexts/NotificationContext';
 import { Clock, Users, TestTube, FileCheck, Search, Filter, User, Calendar, RefreshCw, CheckCircle, X, Eye, Send, AlertCircle, FileText, FileSignature as Signature } from 'lucide-react';
@@ -795,7 +796,7 @@ function ResultsReviewModal({ appointment, patient, onClose, onApprove }: Result
         </div>
       </div>
     </div>
-  );
+  ); 
 }
 
 export default DoctorDashboard;

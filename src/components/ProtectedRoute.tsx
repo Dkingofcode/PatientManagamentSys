@@ -1,36 +1,61 @@
-import React from 'react';
+import  { type JSX } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import type { UserRole } from '../contexts/AuthContext';
+//import type { UserRole } from '../contexts/AuthContext';
 
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-  allowedRoles: UserRole[];
-}
+// interface ProtectedRouteProps {
+//   children: React.ReactNode;
+//   allowedRoles: UserRole[];
+// }
 
-function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+// function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
+//   const { user, isAuthenticated } = useAuth();
+
+//   if (!isAuthenticated) {
+//     return <Navigate to="/login" replace />;
+//   }
+
+//   if (user && !allowedRoles.includes(user.role)) {
+//     // Redirect to their appropriate dashboard
+//     const roleRoutes = {
+//       'front-desk': '/front-desk',
+//       'doctor': '/doctor',
+//       'lab-technician': '/lab-technician',
+//       'admin': '/admin',
+//       'patient': '/patient',
+//     };
+//     return <Navigate to={roleRoutes[user.role]} replace />;
+//   }
+
+//   return <>{children}</>;
+// }
+
+// export default ProtectedRoute;
+
+
+
+export default function ProtectedRoute({ element, allowedRoles }: {
+  element: JSX.Element;
+  allowedRoles: string[];
+}) {
+  
   const { user, isAuthenticated } = useAuth();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" />;
   }
 
-  if (user && !allowedRoles.includes(user.role)) {
-    // Redirect to their appropriate dashboard
-    const roleRoutes = {
-      'front-desk': '/front-desk',
-      'doctor': '/doctor',
-      'lab-technician': '/lab-technician',
-      'admin': '/admin',
-      'patient': '/patient',
-    };
-    return <Navigate to={roleRoutes[user.role]} replace />;
+  // 👇 Admins can access everything
+  if (user?.role !== 'admin' && !allowedRoles.includes(user?.role ?? '')) {
+    return <Navigate to="/login" />;
   }
 
-  return <>{children}</>;
+  return element;
 }
 
-export default ProtectedRoute;
+
+
+
 
 // // src/components/PrivateRoute.tsx
 // import { useSelector } from 'react-redux';

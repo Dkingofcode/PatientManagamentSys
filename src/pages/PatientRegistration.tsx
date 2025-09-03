@@ -12,6 +12,7 @@ import { useNotifications } from '../contexts/NotificationContext';
 import type { TestType } from '../contexts/AppointmentContext';
 import type { Patient } from '../contexts/AppointmentContext';
 
+
 export interface RegistrationData {
   category: string;
   tests: TestType[];
@@ -101,6 +102,7 @@ function PatientRegistration() {
         status: 'scheduled' as const,
         doctorApproved: false,
         labAssigned: false,
+        patientName: "donvisod"
       };
 
       addPatient(patient);
@@ -111,6 +113,9 @@ function PatientRegistration() {
         title: 'New Appointment Scheduled',
         message: `New patient ${patient.name} registered and appointment scheduled for ${registrationData.appointmentDate} at ${registrationData.appointmentTime}. Awaiting doctor approval.`,
         type: 'success',
+        category: 'appointment',
+        priority: 'high',
+        recipientRole: 'admin',
       });
 
       setGeneratedIds({ patientId, appointmentId });
@@ -162,66 +167,84 @@ function PatientRegistration() {
   const CurrentStepComponent = steps[currentStep - 1].component;
 
   return (
-    <Layout title="Patient Registration">
+    <Layout title="">
       <div className="max-w-4xl mx-auto">
         {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {steps.map((step, index) => (
-              <div key={step.number} className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                  currentStep >= step.number
-                    ? 'bg-blue-600 border-blue-600 text-white'
-                    : 'border-gray-300 text-gray-400'
-                }`}>
-                  {step.number}
-                </div>
-                <div className="ml-3">
-                  <p className={`text-sm font-medium ${
-                    currentStep >= step.number ? 'text-blue-600' : 'text-gray-400'
-                  }`}>
-                    Step {step.number}
-                  </p>
-                  <p className={`text-sm ${
-                    currentStep >= step.number ? 'text-gray-900' : 'text-gray-500'
-                  }`}>
-                    {step.title}
-                  </p>
-                </div>
-                {index < steps.length - 1 && (
-                  <div className={`flex-1 h-0.5 mx-4 ${
-                    currentStep > step.number ? 'bg-blue-600' : 'bg-gray-300'
-                  }`} />
-                )}
-              </div>
-            ))}
-            {/* Payment Step Indicator */}
-            <div className="flex items-center">
-              <div className={`flex-1 h-0.5 mx-4 ${
-                showPaymentStep || isCompleted ? 'bg-blue-600' : 'bg-gray-300'
-              }`} />
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                showPaymentStep || isCompleted
-                  ? 'bg-blue-600 border-blue-600 text-white'
-                  : 'border-gray-300 text-gray-400'
-              }`}>
-                5
-              </div>
-              <div className="ml-3">
-                <p className={`text-sm font-medium ${
-                  showPaymentStep || isCompleted ? 'text-blue-600' : 'text-gray-400'
-                }`}>
-                  Step 5
-                </p>
-                <p className={`text-sm ${
-                  showPaymentStep || isCompleted ? 'text-gray-900' : 'text-gray-500'
-                }`}>
-                  Payment Processing
-                </p>
-              </div>
-            </div>
-          </div>
+       <div className="mb-8">
+  <div className="grid grid-cols-2 md:flex md:items-center md:justify-between gap-4">
+    {steps.map((step, index) => (
+      <div key={step.number} className="flex items-center">
+        <div
+          className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+            currentStep >= step.number
+              ? 'bg-purple-700 border-purple-700 text-white'
+              : 'border-gray-300 text-gray-400'
+          }`}
+        >
+          {step.number}
         </div>
+        <div className="ml-3">
+          <p
+            className={`text-sm font-medium ${
+              currentStep >= step.number ? 'text-purple-600' : 'text-gray-400'
+            }`}
+          >
+            Step {step.number}
+          </p>
+          <p
+            className={`text-sm ${
+              currentStep >= step.number ? 'text-gray-900' : 'text-gray-500'
+            }`}
+          >
+            {step.title}
+          </p>
+        </div>
+        {index < steps.length - 1 && (
+          <div
+            className={`hidden md:block flex-1 h-0.5 mx-4 ${
+              currentStep > step.number ? 'bg-blue-600' : 'bg-gray-300'
+            }`}
+          />
+        )}
+      </div>
+    ))}
+
+    {/* Payment Step Indicator */}
+    <div className="flex items-center">
+      <div
+        className={`hidden md:block flex-1 h-0.5 mx-4 ${
+          showPaymentStep || isCompleted ? 'bg-blue-600' : 'bg-gray-300'
+        }`}
+      />
+      <div
+        className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+          showPaymentStep || isCompleted
+            ? 'bg-blue-600 border-blue-600 text-white'
+            : 'border-gray-300 text-gray-400'
+        }`}
+      >
+        5
+      </div>
+      <div className="ml-3">
+        <p
+          className={`text-sm font-medium ${
+            showPaymentStep || isCompleted ? 'text-blue-600' : 'text-gray-400'
+          }`}
+        >
+          Step 5
+        </p>
+        <p
+          className={`text-sm ${
+            showPaymentStep || isCompleted ? 'text-gray-900' : 'text-gray-500'
+          }`}
+        >
+          Payment Processing
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
 
         {/* Step Content */}
         <div className="bg-white rounded-lg shadow-sm p-8">
