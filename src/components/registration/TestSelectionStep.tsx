@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react';
 import type { RegistrationData } from '../../pages/PatientRegistration';
 import { useAppointments } from '../../contexts/AppointmentContext';
 import { Droplets, FlaskConical, Heart, Brain, Eye, X } from 'lucide-react';
-import type { TestType } from '../../contexts/AppointmentContext';
+import type { TestType as OriginalTestType } from '../../contexts/AppointmentContext';
+
+interface TestType extends OriginalTestType {
+  description?: string;
+}
 
 interface TestSelectionStepProps {
   data: Partial<RegistrationData>;
   updateData: (data: Partial<RegistrationData>) => void;
   onNext: () => void;
-  onPrev: () => void;
+  onPrev?: () => void;
   currentStep: number;
 }
 
@@ -17,6 +21,12 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
   const [selectedTests, setSelectedTests] = useState<TestType[]>(data.tests || []);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [loading, setLoading] = useState(true);
+
+  // Helper: safely format price
+  const formatPrice = (value: any): string => {
+    const num = parseFloat(String(value).replace(/[^0-9.-]/g, '')); // strip ₦, commas, etc.
+    return isNaN(num) ? '0' : num.toLocaleString();
+  };
 
   // Detect when availableTests is ready
   useEffect(() => {
@@ -56,11 +66,11 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
     onNext();
   };
 
-  // Ensure prices are numbers when calculating total
-  const totalPrice = selectedTests.reduce(
-    (sum, test) => sum + Number(test.price || 0),
-    0
-  );
+  // Ensure prices are valid numbers when calculating total
+  const totalPrice = selectedTests.reduce((sum, test) => {
+    const num = parseFloat(String(test.price).replace(/[^0-9.-]/g, ''));
+    return sum + (isNaN(num) ? 0 : num);
+  }, 0);
 
   const filteredTests = availableTests.filter(test =>
     test.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -101,8 +111,7 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
             {filteredTests.map((test) => {
               const Icon = getTestIcon(test.name);
               const isSelected = selectedTests.some(t => t.id === test.id);
-              const currentPrice = Number(test.price || 0);
-              const hasDiscount = currentPrice !== Number(test.price || 0); // placeholder for discount logic
+              const rawPrice = String(test.price ?? '0');
 
               return (
                 <button
@@ -130,18 +139,7 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
                           <p className="text-xs text-gray-400 mt-1">{test.description}</p>
                         )}
                         <div className="text-sm text-gray-600">
-                          {hasDiscount ? (
-                            <div className="flex items-center space-x-2">
-                              <span className="line-through text-gray-400">
-                                ₦{Number(test.price).toLocaleString()}
-                              </span>
-                              <span className="text-green-600 font-medium">
-                                ₦{currentPrice.toLocaleString()}
-                              </span>
-                            </div>
-                          ) : (
-                            <span>₦{currentPrice.toLocaleString()}</span>
-                          )}
+                          <span>₦{formatPrice(rawPrice)}</span>
                         </div>
                       </div>
                     </div>
@@ -168,7 +166,7 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
                 <span className="text-sm text-gray-700">{test.name}</span>
                 <div className="flex items-center space-x-2">
                   <span className="text-sm font-medium">
-                    ₦{Number(test.price || 0).toLocaleString()}
+                    ₦{formatPrice(test.price)}
                   </span>
                   <button
                     onClick={() => toggleTest(test)}
@@ -183,7 +181,7 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
           <div className="border-t pt-3 flex justify-between items-center">
             <div className="text-sm text-gray-600">Price</div>
             <div className="text-lg font-bold text-gray-900">
-              Total: ₦{totalPrice.toLocaleString()}
+              Total: ₦{formatPrice(totalPrice)}
             </div>
           </div>
         </div>
@@ -191,12 +189,14 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <button
-          onClick={onPrev}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          Previous
-        </button>
+        {onPrev && (
+          <button
+            onClick={onPrev}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Previous
+          </button>
+        )}
         <button
           onClick={handleNext}
           disabled={selectedTests.length === 0}

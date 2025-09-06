@@ -6,7 +6,7 @@ interface PatientInfoStepProps {
   data: Partial<RegistrationData>;
   updateData: (data: Partial<RegistrationData>) => void;
   onNext: () => void;
-  onPrev: () => void;
+  onPrev?: () => void;
 }
 
 function PatientInfoStep({ data, updateData, onNext, onPrev }: PatientInfoStepProps) {
@@ -153,51 +153,48 @@ function PatientInfoStep({ data, updateData, onNext, onPrev }: PatientInfoStepPr
           {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
         </div>
 
-        {/* DOB + Age + Gender in same row */}
-        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* DOB */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
-            <input
-              type="date"
-              value={patientInfo.dateOfBirth}
-              onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
-            {errors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{errors.dateOfBirth}</p>}
-          </div>
+        {/* Date of Birth */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
+          <input
+            type="date"
+            value={patientInfo.dateOfBirth}
+            onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
+            }`}
+          />
+          {errors.dateOfBirth && <p className="text-red-500 text-sm mt-1">{errors.dateOfBirth}</p>}
+        </div>
 
-          {/* Age */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
-            <input
-              type="text"
-              value={age !== '' ? `${age} years` : ''}
-              readOnly
-              placeholder="Auto-calculated"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
-            />
-          </div>
+        {/* Age */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Age</label>
+          <input
+            type="text"
+            value={age !== '' ? `${age} years` : ''}
+            readOnly
+            placeholder="Auto-calculated"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"
+          />
+        </div>
 
-          {/* Gender */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
-            <select
-              value={patientInfo.gender}
-              onChange={(e) => handleInputChange('gender', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.gender ? 'border-red-500' : 'border-gray-300'
-              }`}
-            >
-              <option value="">Select gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-            {errors.gender && <p className="text-red-500 text-sm mt-1">{errors.gender}</p>}
-          </div>
+        {/* Gender */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+          <select
+            value={patientInfo.gender}
+            onChange={(e) => handleInputChange('gender', e.target.value)}
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+              errors.gender ? 'border-red-500' : 'border-gray-300'
+            }`}
+          >
+            <option value="">Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+          {errors.gender && <p className="text-red-500 text-sm mt-1">{errors.gender}</p>}
         </div>
 
         {/* Address */}
@@ -264,12 +261,14 @@ function PatientInfoStep({ data, updateData, onNext, onPrev }: PatientInfoStepPr
 
       {/* Navigation */}
       <div className="flex justify-between">
-        <button
-          onClick={onPrev}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-        >
-          Previous
-        </button>
+        {onPrev && (
+          <button
+            onClick={onPrev}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+          >
+            Previous
+          </button>
+        )}
         <button
           onClick={handleNext}
           className="px-6 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800"

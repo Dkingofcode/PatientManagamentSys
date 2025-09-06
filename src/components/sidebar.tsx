@@ -12,6 +12,8 @@ export default function SettingsSidebar() {
     { id: "labtech", label: "LabTech Dashboard", icon: <FlaskConical className="w-5 h-5" />, path: "/lab-technician" },
     { id: "inventory", label: "Inventory Dashboard", icon: <Warehouse className="w-5 h-5" />, path: "/inventory"},
     { id: "account", label: "Account Dashboard", icon: <User className="w-5 h-5" />, path: "/account" },
+    { id: "radiography", label: "Radiography Dashboard", icon: <User className="w-3 h-5" />, path: "/radiography" },
+    { id: "sonography", label: "Sonography Dashboard", icon: <User className="w-4 h-5" />, path: "/sonography" },
   ];
 
   return (

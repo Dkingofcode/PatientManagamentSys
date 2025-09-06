@@ -15,6 +15,8 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import XRayDashboard from './pages/XrayDashboard';
 import InventoryDashboard from './pages/InventoryDashboard';
+import SonographyDashboard from './pages/SonographyDashboard';
+import RadiographyDashboard from './pages/RadiographyDashboard';
 
 function App() {
   return (
@@ -38,6 +40,8 @@ function App() {
               <Route path="/lab-technician" element={<LabTechnicianDashboard />} />
               <Route path="/x-ray" element={<XRayDashboard />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/sonography" element={<SonographyDashboard />} />
+                <Route path="/radiography" element={<RadiographyDashboard/>} />
 
               {/* Protected routes */}
               <Route

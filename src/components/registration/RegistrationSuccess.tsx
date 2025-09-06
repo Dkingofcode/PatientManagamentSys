@@ -117,25 +117,31 @@ function RegistrationSuccess({
               Appointment Details
             </h3>
             <div className="space-y-3">
-              <div>
-                <p className="text-sm text-gray-600">Doctor</p>
-                <p className="font-medium text-gray-900">{selectedDoctor?.name}</p>
-                <p className="text-sm text-gray-500">{selectedDoctor?.specialty}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Date & Time</p>
-                <div className="flex items-center space-x-2">
-                  <Calendar size={16} className="text-gray-400" />
-                  <span className="font-medium text-gray-900">
-                    {registrationData.appointmentDate && 
-                      new Date(registrationData.appointmentDate).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-2 mt-1">
-                  <Clock size={16} className="text-gray-400" />
-                  <span className="font-medium text-gray-900">{registrationData.appointmentTime}</span>
-                </div>
-              </div>
+              {registrationData.doctorId ? (
+                <>
+                  <div>
+                    <p className="text-sm text-gray-600">Doctor</p>
+                    <p className="font-medium text-gray-900">{selectedDoctor?.name ?? 'Not assigned'}</p>
+                    <p className="text-sm text-gray-500">{selectedDoctor?.specialty}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Date & Time</p>
+                    <div className="flex items-center space-x-2">
+                      <Calendar size={16} className="text-gray-400" />
+                      <span className="font-medium text-gray-900">
+                        {registrationData.appointmentDate && 
+                          new Date(registrationData.appointmentDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Clock size={16} className="text-gray-400" />
+                      <span className="font-medium text-gray-900">{registrationData.appointmentTime}</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-gray-600">Direct lab tests - No doctor appointment required</p>
+              )}
             </div>
           </div>
         </div>

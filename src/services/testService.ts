@@ -12,29 +12,18 @@ export async function fetchTests(
 
   // Dummy fallback data
   const dummyData = {
-    tests: [
-      { id: "1", name: "X-Ray Chest", category: "Radiology", isActive: true },
-      { id: "2", name: "Blood Test - CBC", category: "Lab", isActive: true },
-      { id: "3", name: "MRI Brain", category: "Radiology", isActive: false },
-    ],
-    pagination: {
-      page: options.page || 1,
-      limit: options.limit || 10,
-      total: 3,
-      pages: 1,
-    },
+    
   };
 
-  // Create a fetch with timeout
-  const fetchWithTimeout = new Promise(async (resolve, reject) => {
+  const fetchWithTimeout = new Promise(async (resolve) => {
     const timer = setTimeout(() => {
       console.warn("Fetch timed out, returning dummy data...");
       resolve(dummyData);
-    }, 7000); // 7 seconds
+    }, 1000);
 
     try {
       const res = await fetch(
-        `https://pms-backend-postgresql.onrender.com/api/tests/?${params.toString()}`,
+        `https://pms-backend-postgresql.onrender.com/api/tests`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -57,5 +46,5 @@ export async function fetchTests(
     }
   });
 
-  return fetchWithTimeout;
+  return await fetchWithTimeout; // <-- important
 }

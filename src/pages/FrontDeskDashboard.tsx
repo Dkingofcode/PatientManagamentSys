@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import { useAppointments } from "../contexts/AppointmentContext";
@@ -12,24 +12,27 @@ import {
   Eye,
   Mail,
   Phone,
+  X,
 } from "lucide-react";
 import ExistingPatientBooking from "../components/ExistingPatientBooking";
-//import { useNavigate } from "react-router-dom";
 
 function FrontDeskDashboard() {
   const navigate = useNavigate();
-  const { patients,  getAppointmentsByFrontDesk } =
-    useAppointments();
+  const { patients, getAppointmentsByFrontDesk, doctors } = useAppointments();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [showPatientDetails, setShowPatientDetails] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const today = new Date().toISOString().split("T")[0];
-//  const navigate = useNavigate();
-  const myPatients = patients;
+
+  const myPatients = useMemo(() => {
+    return patients || [];
+  }, [patients]);
+
   const myAppointments = getAppointmentsByFrontDesk("987656789");
 
   const todayAppointments = myAppointments.filter((apt) => apt.date === today);
@@ -44,21 +47,31 @@ function FrontDeskDashboard() {
   const filteredPatients = myPatients.filter(
     (patient) =>
       patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.email.toLowerCase().includes(searchTerm) ||
-      patient.phone.includes(searchTerm)
+      (patient.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (patient.phone || "").includes(searchTerm)
   );
 
   const pendingTests = myAppointments.filter(
     (apt) => apt.status === "scheduled"
   ).length;
 
-  const handlePatientSelect = (patient: any) => {
+ // const handlePatientSelect = (patient: any) => {
+  //  setSelectedPatient(patient);
+  //  setShowBookingModal(true);
+  //};
+
+  const handleViewPatient = (patient: any) => {
     setSelectedPatient(patient);
-    setShowBookingModal(true);
+    setShowPatientDetails(true);
   };
 
   const handleCloseModal = () => {
     setShowBookingModal(false);
+    setSelectedPatient(null);
+  };
+
+  const handleCloseDetailsModal = () => {
+    setShowPatientDetails(false);
     setSelectedPatient(null);
   };
 
@@ -72,6 +85,17 @@ function FrontDeskDashboard() {
       {children}
     </div>
   );
+
+  // Get appointments for the selected patient
+  const getPatientAppointments = (patientId: string) => {
+    return myAppointments.filter((apt) => apt.patientId === patientId);
+  };
+
+  // Get doctor name from doctorId
+  const getDoctorName = (doctorId: string) => {
+    const doctor = doctors.find((doc) => doc.id === doctorId);
+    return doctor ? doctor.name : "N/A";
+  };
 
   return (
     <Layout title="">
@@ -206,9 +230,9 @@ function FrontDeskDashboard() {
                         </div>
                       </div>
                       <button
-                        onClick={() => handlePatientSelect(patient)}
+                        onClick={() => handleViewPatient(patient)}
                         className="p-2 rounded-md hover:bg-gray-100 text-gray-600"
-                        title="View / Book"
+                        title="View Details"
                       >
                         <Eye size={16} />
                       </button>
@@ -216,9 +240,7 @@ function FrontDeskDashboard() {
                   ))
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    {searchTerm
-                      ? "No patients found"
-                      : "No registered patients"}
+                    {searchTerm ? "No patients found" : "No registered patients"}
                   </div>
                 )}
               </div>
@@ -353,7 +375,88 @@ function FrontDeskDashboard() {
             <ExistingPatientBooking
               onClose={handleCloseModal}
               preSelectedPatient={selectedPatient}
+              selectedTests={[]}
+              onTestSelect={() => {}}
             />
+          </div>
+        </div>
+      )}
+
+      {showPatientDetails && selectedPatient && (
+        <div className="fixed inset-0 flex items-center justify-center bg-blue-50 bg-opacity-50 z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+            <button
+              onClick={handleCloseDetailsModal}
+              className="absolute top-3 right-3 text-gray-600 hover:text-gray-800"
+            >
+              <X size={20} />
+            </button>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Patient Details
+            </h2>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-gray-600">Name</p>
+                <p className="text-gray-900 font-medium">{selectedPatient.name}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Email</p>
+                <p className="text-gray-900">{selectedPatient.email || "N/A"}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Phone</p>
+                <p className="text-gray-900">{selectedPatient.phone || "N/A"}</p>
+              </div>
+              {selectedPatient.category && (
+                <div>
+                  <p className="text-sm text-gray-600">Category</p>
+                  <p className="text-gray-900">{selectedPatient.category.replace("-", " ")}</p>
+                </div>
+              )}
+              {selectedPatient.registrationDate && (
+                <div>
+                  <p className="text-sm text-gray-600">Registration Date</p>
+                  <p className="text-gray-900">
+                    {new Date(selectedPatient.registrationDate).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+              {/* <div>
+                <p className="text-sm text-gray-600">Tests Taken</p>
+                {getPatientAppointments(selectedPatient.id).length > 0 ? (
+                  <ul className="text-gray-900 list-disc pl-5">
+                    {getPatientAppointments(selectedPatient.id).flatMap((apt) =>
+                      apt.tests.map((test: any, index: number) => (
+                        <li key={`${apt.id}-test-${index}`}>
+                          {test.name} (Date: {new Date(apt.date).toLocaleDateString()})
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                ) : (
+                  <p className="text-gray-900">No tests taken</p>
+                )}
+              </div> */}
+              <div>
+                <p className="text-sm text-gray-600">Assigned Doctor</p>
+                {getPatientAppointments(selectedPatient.id).length > 0 ? (
+                  <p className="text-gray-900">
+                    {getDoctorName(getPatientAppointments(selectedPatient.id)[0].doctorId)}
+                  </p>
+                ) : (
+                  <p className="text-gray-900">No doctor assigned</p>
+                )}
+              </div>
+              {/* <button
+                onClick={() => {
+                  handleCloseDetailsModal();
+                  handlePatientSelect(selectedPatient);
+                }}
+                className="w-full mt-4 px-4 py-2 bg-purple-800 text-white rounded-md hover:bg-purple-900"
+              >
+                Book Appointment
+              </button> */}
+            </div>
           </div>
         </div>
       )}
@@ -362,4 +465,3 @@ function FrontDeskDashboard() {
 }
 
 export default FrontDeskDashboard;
-

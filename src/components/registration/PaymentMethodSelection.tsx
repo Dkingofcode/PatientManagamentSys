@@ -1,8 +1,16 @@
-import  { useState } from 'react';
+import { useState } from 'react';
 //import { useAuth } from '../../contexts/AuthContext';
 import { useAppointments } from '../../contexts/AppointmentContext';
-import type{ RegistrationData } from '../../pages/PatientRegistration';
-import { CreditCard, Banknote, ArrowLeftRight, Calculator, Receipt, DollarSign, ArrowLeft } from 'lucide-react';
+import type { RegistrationData } from '../../pages/PatientRegistration';
+import {
+  CreditCard,
+  Banknote,
+  ArrowLeftRight,
+  Calculator,
+  Receipt,
+  DollarSign,
+  ArrowLeft,
+} from 'lucide-react';
 
 interface PaymentMethodSelectionProps {
   data: Partial<RegistrationData>;
@@ -11,18 +19,28 @@ interface PaymentMethodSelectionProps {
   onBack: () => void;
 }
 
-function PaymentMethodSelection({ data, updateData, onComplete, onBack }: PaymentMethodSelectionProps) {
+function PaymentMethodSelection({
+  data,
+  updateData,
+  onComplete,
+  onBack,
+}: PaymentMethodSelectionProps) {
   // const { user } = useAuth();
   const { getDiscountPercent } = useAppointments();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
   const [paymentAmounts, setPaymentAmounts] = useState<{ [key: string]: number }>({});
   const [creditAmount, setCreditAmount] = useState(0);
+  const [manualServicePrice, setManualServicePrice] = useState<string>(''); // blank by default
 
-  // const getCurrentTestPrice = (test: any) => {
-  //   return getTestPrice(test.id, "walk-in");
-  // };
+  // subtotal = tests price OR manual service price
+  const subtotal =
+    data.tests?.length
+      ? data.tests.reduce((sum, test) => {
+          const price = Number(String(test.price).replace(/[^\d.-]/g, '')) || 0;
+          return sum + price;
+        }, 0)
+      : parseFloat(manualServicePrice) || 0;
 
-  const subtotal = data.tests?.reduce((sum, test) => sum + test.price, 0) || 0;
   const discountPercent = getDiscountPercent('walk-in');
   const discountAmount = subtotal * (discountPercent / 100);
   const totalAmount = subtotal - discountAmount;
@@ -48,7 +66,7 @@ function PaymentMethodSelection({ data, updateData, onComplete, onBack }: Paymen
         const methods = methodId.split('-');
         const splitAmount = totalAmount / methods.length;
         const newAmounts: { [key: string]: number } = {};
-        methods.forEach(method => {
+        methods.forEach((method) => {
           newAmounts[method] = splitAmount;
         });
         setPaymentAmounts(newAmounts);
@@ -59,7 +77,7 @@ function PaymentMethodSelection({ data, updateData, onComplete, onBack }: Paymen
   };
 
   const handleAmountChange = (methodId: string, amount: number) => {
-    setPaymentAmounts(prev => ({ ...prev, [methodId]: amount }));
+    setPaymentAmounts((prev) => ({ ...prev, [methodId]: amount }));
   };
 
   const getPaymentMethods = () => {
@@ -98,12 +116,13 @@ function PaymentMethodSelection({ data, updateData, onComplete, onBack }: Paymen
       totalAmount,
       totalPaid: getTotalPaid(),
       remainingBalance: getRemainingBalance(),
-      processedBy: "uytyrytuio",
-      processedById: "3838",
+      processedBy: 'uytyrytuio',
+      processedById: '3838',
       processedAt: new Date().toISOString(),
+      manualServicePrice: parseFloat(manualServicePrice) || 0,
     };
 
-    updateData({ paymentData });
+    updateData({ paymentData }); // only pass paymentData
     onComplete();
   };
 
@@ -127,29 +146,46 @@ function PaymentMethodSelection({ data, updateData, onComplete, onBack }: Paymen
       {/* Payment Summary */}
       <div className="bg-gray-50 rounded-lg p-6 mb-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Summary</h3>
-        
+
         <div className="space-y-3">
+          {/* Manual Service Price Input */}
+          {!data.tests?.length && (
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-gray-700">Service Charge</span>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₦</span>
+                <input
+                  type="number"
+                  min="0"
+                  value={manualServicePrice}
+                  onChange={(e) => setManualServicePrice(e.target.value)}
+                  className="w-32 pl-8 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Tests List */}
           {data.tests?.map((test, index) => (
             <div key={index} className="flex justify-between items-center">
               <span className="text-gray-700">{test.name}</span>
               <div className="flex items-center space-x-2">
                 {test.price && (
-                  <span className="line-through text-gray-400 text-sm">
-                    ₦{test.price}
-                  </span>
+                  <span className="line-through text-gray-400 text-sm">₦{test.price}</span>
                 )}
                 <span className="font-medium">₦{test.price}</span>
               </div>
             </div>
           ))}
-          
+
           {discountAmount > 0 && (
             <div className="flex justify-between items-center text-green-600 border-t pt-2">
               <span>Discount ({discountPercent}% - {data.category?.toUpperCase()})</span>
               <span className="font-medium">-₦{discountAmount.toFixed(2)}</span>
             </div>
           )}
-          
+
           <div className="flex justify-between items-center text-xl font-bold border-t pt-3">
             <span>Total Amount</span>
             <span>₦{totalAmount.toFixed(2)}</span>
@@ -160,12 +196,12 @@ function PaymentMethodSelection({ data, updateData, onComplete, onBack }: Paymen
       {/* Payment Method Selection */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-8">
         <h3 className="text-lg font-semibold text-gray-900 mb-6">Select Payment Method</h3>
-        
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {paymentOptions.map((option) => {
             const Icon = option.icon;
             const isSelected = selectedPaymentMethod === option.id;
-            
+
             return (
               <button
                 key={option.id}
@@ -177,9 +213,11 @@ function PaymentMethodSelection({ data, updateData, onComplete, onBack }: Paymen
                 }`}
               >
                 <div className="flex flex-col items-center">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
-                    isSelected ? option.color : 'bg-gray-100'
-                  }`}>
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${
+                      isSelected ? option.color : 'bg-gray-100'
+                    }`}
+                  >
                     <Icon size={20} className={isSelected ? 'text-white' : 'text-gray-600'} />
                   </div>
                   <span className="text-sm font-medium text-center">{option.label}</span>
@@ -194,7 +232,7 @@ function PaymentMethodSelection({ data, updateData, onComplete, onBack }: Paymen
           <div className="space-y-4 mb-6">
             <h4 className="text-md font-semibold text-gray-900">Enter Payment Amounts</h4>
             {getPaymentMethods().map((methodId) => {
-              const method = paymentOptions.find(opt => opt.id === methodId);
+              const method = paymentOptions.find((opt) => opt.id === methodId);
               return (
                 <div key={methodId} className="flex items-center space-x-4">
                   <div className="w-32">
@@ -272,33 +310,6 @@ function PaymentMethodSelection({ data, updateData, onComplete, onBack }: Paymen
               <p className={`text-2xl font-bold ${getRemainingBalance() > 0 ? 'text-red-600' : 'text-purple-600'}`}>
                 ₦{getRemainingBalance().toFixed(2)}
               </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Transaction Log Preview */}
-      {selectedPaymentMethod && (
-        <div className="bg-blue-50 rounded-lg p-4 mb-8">
-          <h4 className="text-sm font-medium text-blue-900 mb-3">Transaction Log Preview</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-blue-700">Payment Method(s):</span>
-              <span className="ml-2 font-medium text-blue-900">
-                {getPaymentMethods().map(method => method.toUpperCase()).join(' + ')}
-              </span>
-            </div>
-            <div>
-              <span className="text-blue-700">Processed By:</span>
-              <span className="ml-2 font-medium text-blue-900">{"8yikijhg"} (ID: {"3838"})</span>
-            </div>
-            <div>
-              <span className="text-blue-700">Total Transaction:</span>
-              <span className="ml-2 font-medium text-blue-900">₦{totalAmount.toFixed(2)}</span>
-            </div>
-            <div>
-              <span className="text-blue-700">Timestamp:</span>
-              <span className="ml-2 font-medium text-blue-900">{new Date().toLocaleString()}</span>
             </div>
           </div>
         </div>

@@ -31,9 +31,9 @@ function Layout({ children, title }: LayoutProps) {
               {/* Notifications */}
               <button className="relative p-2 text-gray-400 hover:text-[#3065B5] transition-colors">
                 <Bell size={20} />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  88
-                </span>
+                {/* <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  
+                </span> */}
               </button>
 
               {/* If user is Admin, show "Back to Admin Dashboard" */}

@@ -1,142 +1,111 @@
 import React, { useState } from 'react';
 import Layout from '../components/Layout';
-//mport { useAuth } from '../contexts/AuthContext';
-
+import Novu from '../components/Inbox';
 import { useAppointments } from '../contexts/AppointmentContext';
-// import { useNotifications } from '../contexts/NotificationContext';
-import { Clock, Users, TestTube, FileCheck, Search, Filter, User, Calendar, RefreshCw, CheckCircle, X, Eye, Send, AlertCircle, FileText, FileSignature as Signature } from 'lucide-react';
+import {
+  Clock, Users, TestTube, FileCheck, Search, Filter, User, Calendar, RefreshCw, CheckCircle, X, Send, AlertCircle, FileText, FileSignature as Signature, Upload,
+} from 'lucide-react';
 
 function DoctorDashboard() {
- // const { user } = useAuth();
-  const { appointments, patients, updateAppointment, rescheduleAppointment } = useAppointments();
- // const { addNotification } = useNotifications();
-  
-  console.log('Doctor Dashboard - User:',);
+  const { appointments, patients, updateAppointment, rescheduleAppointment, getAppointmentsByDoctor, doctors } = useAppointments();
+ 
+  // Default to Dr. Kuti (ID: "7") for demo; replace with auth-based doctor ID in production
+  const [currentDoctorId] = useState('7');
+  const currentDoctor = doctors.find((d) => d.id === currentDoctorId)?.name || 'Doctor';
   console.log('Doctor Dashboard - All Appointments:', appointments);
   console.log('Doctor Dashboard - All Patients:', patients);
-  
+  console.log('Current Doctor ID:', currentDoctorId, 'Name:', currentDoctor);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showResultsModal, setShowResultsModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
-
-  // Get today's date
   const today = new Date().toISOString().split('T')[0];
-  console.log('Today\'s date:', today);
-
-  // Filter appointments for the logged-in doctor
-  const doctorAppointments = appointments.filter(appointment => appointment.doctorId === "8765");
+  console.log('Today date:', today);
+  const doctorAppointments = getAppointmentsByDoctor(currentDoctorId);
   console.log('Doctor Appointments:', doctorAppointments);
-  
-  // Today's appointments
-  const todayAppointments = doctorAppointments.filter(appointment => appointment.date === today);
-  console.log('Today\'s Appointments:', todayAppointments);
-  
-  // Filter appointments based on search and status
-  const filteredAppointments = doctorAppointments.filter(appointment => {
-    const patient = patients.find(p => p.id === appointment.patientId);
-    const matchesSearch = !searchTerm || 
-      patient?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient?.email.toLowerCase().includes(searchTerm.toLowerCase());
+  const todayAppointments = doctorAppointments.filter((appointment) => appointment.date === today);
+  console.log("Today's Appointments:", todayAppointments);
+  const filteredAppointments = doctorAppointments.filter((appointment) => {
+    const patient = patients.find((p) => p.id === appointment.patientId);
+    const matchesSearch =
+      !searchTerm ||
+      (patient?.name?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false) ||
+      (patient?.email?.toLowerCase()?.includes(searchTerm.toLowerCase()) || false);
     const matchesStatus = statusFilter === 'all' || appointment.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
-
-  // Calculate statistics
-  const pendingRequests = doctorAppointments.filter(apt => apt.status === 'scheduled' && !apt.doctorApproved).length;
-  const assignedTests = doctorAppointments.filter(apt => apt.status === 'in-progress').length;
-  const awaitingResults = doctorAppointments.filter(apt => apt.status === 'lab-completed').length;
-  const forApproval = doctorAppointments.filter(apt => apt.status === 'scheduled' && !apt.doctorApproved).length;
-
+  const pendingRequests = doctorAppointments.filter((apt) => apt.status === 'scheduled' && !apt.doctorApproved).length;
+  const assignedTests = doctorAppointments.filter((apt) => apt.status === 'in-progress').length;
+  const awaitingResults = doctorAppointments.filter((apt) => apt.status === 'lab-completed').length;
+  const forApproval = doctorAppointments.filter((apt) => apt.status === 'scheduled' && !apt.doctorApproved).length;
   const handleReschedule = (appointment: any) => {
     setSelectedAppointment(appointment);
     setShowRescheduleModal(true);
   };
-
   const handleApprove = (appointment: any) => {
     setSelectedAppointment(appointment);
     setShowApprovalModal(true);
   };
-
   const handleViewResults = (appointment: any) => {
     setSelectedAppointment(appointment);
     setShowResultsModal(true);
   };
-
   const submitReschedule = (newDate: string, newTime: string, reason: string) => {
     if (selectedAppointment) {
-   //   const patient = patients.find(p => p.id === selectedAppointment.patientId);
-      
       rescheduleAppointment(selectedAppointment.id, newDate, newTime, reason);
-      
-      // addNotification({
-      //   title: 'Appointment Rescheduled',
-      //   message: `Appointment for ${patient?.name} has been rescheduled from ${selectedAppointment.date} ${selectedAppointment.time} to ${newDate} at ${newTime}`,
-      //   type: 'info',
-      // });
-      
       setShowRescheduleModal(false);
       setSelectedAppointment(null);
     }
   };
-
-  const approveAndForwardToLab = (labTechnicianId?: string) => {
+  const approveAndUploadResults = (labTechnicianId?: string, file?: File) => {
     if (selectedAppointment) {
-      //const patient = patients.find(p => p.id === selectedAppointment.patientId);
-      
-      updateAppointment(selectedAppointment.id, {
+      const updates: any = {
         doctorApproved: true,
         labAssigned: true,
         status: 'in-progress',
-        assignedLabTech: labTechnicianId,
-        approvedAt: new Date().toISOString()
-      });
-      
-      // addNotification({
-      //   title: 'Tests Approved & Forwarded to Lab',
-      //   message: `Tests for ${patient?.name} (${selectedAppointment.tests.map((t: any) => t.name).join(', ')}) have been approved and forwarded to lab technicians`,
-      //   type: 'success',
-      // });
-      
+        approvedAt: new Date().toISOString(),
+      };
+      if (labTechnicianId) {
+        updates.assignedLabTech = labTechnicianId;
+      }
+      if (file) {
+        // Simulate file upload and store reference
+        updates.resultsFile = {
+          name: file.name,
+          size: file.size,
+          uploadedAt: new Date().toISOString(),
+        };
+        updates.status = 'lab-completed'; // Move to lab-completed if results uploaded
+      }
+      updateAppointment(selectedAppointment.id, updates);
       setShowApprovalModal(false);
       setSelectedAppointment(null);
     }
   };
-
   const approveResults = (signature: string, comments: string) => {
     if (selectedAppointment) {
-     // const patient = patients.find(p => p.id === selectedAppointment.patientId);
-      
       updateAppointment(selectedAppointment.id, {
         status: 'completed',
         doctorSignature: signature,
         doctorComments: comments,
         finalizedAt: new Date().toISOString()
       });
-      
-      // addNotification({
-      //   title: 'Results Approved & Sent to Patient',
-      //   message: `Test results for ${patient?.name} have been approved and securely sent to patient portal with 2FA protection`,
-      //   type: 'success',
-      // });
-      
       setShowResultsModal(false);
       setSelectedAppointment(null);
     }
   };
-
   return (
     <Layout title="">
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Doctor Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage patient test requests and review results</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Doctor Dashboard</h1>
+            <p className="text-gray-600 mt-1">Manage patient test requests and review results</p>
+          </div>
+          <Novu />
         </div>
-
-        {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
@@ -149,7 +118,6 @@ function DoctorDashboard() {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -161,7 +129,6 @@ function DoctorDashboard() {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -173,7 +140,6 @@ function DoctorDashboard() {
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -186,8 +152,6 @@ function DoctorDashboard() {
             </div>
           </div>
         </div>
-
-        {/* Search and Filter */}
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
@@ -216,8 +180,6 @@ function DoctorDashboard() {
             </div>
           </div>
         </div>
-
-        {/* Today's Appointments Section */}
         <div className="bg-white rounded-lg shadow-sm">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -225,15 +187,14 @@ function DoctorDashboard() {
               Today's Appointments ({todayAppointments.length}) - {today}
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Showing appointments for Dr. Trerty ID: 8765 
+              Showing appointments for {currentDoctor} (ID: {currentDoctorId})
             </p>
           </div>
-
           <div className="divide-y divide-gray-200">
             {todayAppointments.length > 0 ? (
               todayAppointments.map((appointment) => {
-                const patient = patients.find(p => p.id === appointment.patientId);
-                console.log('Rendering appointment:', appointment.id, 'Patient:', patient);
+                const patient = patients.find((p) => p.id === appointment.patientId);
+                console.log('Rendering today appointment:', appointment.id, 'Patient:', patient);
                 return (
                   <AppointmentCard
                     key={appointment.id}
@@ -254,22 +215,20 @@ function DoctorDashboard() {
             )}
           </div>
         </div>
-
-        {/* All Patient Test Requests */}
         <div className="bg-white rounded-lg shadow-sm">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
               All Patient Test Requests ({filteredAppointments.length})
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Total appointments for this doctor: {doctorAppointments.length}
+              Total appointments for {currentDoctor}: {doctorAppointments.length}
             </p>
           </div>
-
           <div className="divide-y divide-gray-200">
             {filteredAppointments.length > 0 ? (
               filteredAppointments.map((appointment) => {
-                const patient = patients.find(p => p.id === appointment.patientId);
+                const patient = patients.find((p) => p.id === appointment.patientId);
+                console.log('Rendering all appointment:', appointment.id, 'Patient:', patient);
                 return (
                   <AppointmentCard
                     key={appointment.id}
@@ -290,12 +249,10 @@ function DoctorDashboard() {
             )}
           </div>
         </div>
-
-        {/* Modals */}
         {showRescheduleModal && selectedAppointment && (
           <RescheduleModal
             appointment={selectedAppointment}
-            patient={patients.find(p => p.id === selectedAppointment.patientId)}
+            patient={patients.find((p) => p.id === selectedAppointment.patientId)}
             onClose={() => {
               setShowRescheduleModal(false);
               setSelectedAppointment(null);
@@ -303,23 +260,21 @@ function DoctorDashboard() {
             onSubmit={submitReschedule}
           />
         )}
-
         {showApprovalModal && selectedAppointment && (
           <ApprovalModal
             appointment={selectedAppointment}
-            patient={patients.find(p => p.id === selectedAppointment.patientId)}
+            patient={patients.find((p) => p.id === selectedAppointment.patientId)}
             onClose={() => {
               setShowApprovalModal(false);
               setSelectedAppointment(null);
             }}
-            onApprove={approveAndForwardToLab}
+            onApprove={approveAndUploadResults}
           />
         )}
-
         {showResultsModal && selectedAppointment && (
           <ResultsReviewModal
             appointment={selectedAppointment}
-            patient={patients.find(p => p.id === selectedAppointment.patientId)}
+            patient={patients.find((p) => p.id === selectedAppointment.patientId)}
             onClose={() => {
               setShowResultsModal(false);
               setSelectedAppointment(null);
@@ -351,7 +306,6 @@ function AppointmentCard({ appointment, patient, onReschedule, onApprove, onView
       default: return 'bg-gray-100 text-gray-800';
     }
   };
-
   const getStatusText = (status: string) => {
     switch (status) {
       case 'scheduled': return 'Pending Approval';
@@ -361,7 +315,6 @@ function AppointmentCard({ appointment, patient, onReschedule, onApprove, onView
       default: return status;
     }
   };
-
   return (
     <div className={`p-6 hover:bg-gray-50 transition-colors ${isToday ? 'bg-blue-50' : ''}`}>
       <div className="flex items-start justify-between">
@@ -372,19 +325,17 @@ function AppointmentCard({ appointment, patient, onReschedule, onApprove, onView
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
               <h3 className="text-lg font-medium text-gray-900">{patient?.name || 'Unknown Patient'}</h3>
-              <span className="text-sm text-gray-500">{patient?.email}</span>
+              <span className="text-sm text-gray-500">{patient?.email || 'N/A'}</span>
               {isToday && <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full">TODAY</span>}
             </div>
-            
             <div className="flex items-center space-x-4 mb-3">
               <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
                 {getStatusText(appointment.status)}
               </span>
-              <span className="text-sm text-gray-600">Category: {patient?.category?.replace('-', ' ')}</span>
+              <span className="text-sm text-gray-600">Category: {patient?.category?.replace('-', ' ') || 'N/A'}</span>
               <span className="text-sm text-gray-600">Date: {appointment.date}</span>
               <span className="text-sm text-gray-600">Time: {appointment.time}</span>
             </div>
-
             <div className="mb-3">
               <p className="text-sm text-gray-600 mb-1">Requested Tests:</p>
               <div className="flex flex-wrap gap-2">
@@ -395,13 +346,11 @@ function AppointmentCard({ appointment, patient, onReschedule, onApprove, onView
                 ))}
               </div>
             </div>
-
             {appointment.rescheduleHistory && appointment.rescheduleHistory.length > 0 && (
               <div className="text-xs text-orange-600 mb-2">
                 <span className="font-medium">Rescheduled:</span> {appointment.rescheduleHistory[appointment.rescheduleHistory.length - 1].reason}
               </div>
             )}
-
             {appointment.doctorApproved && (
               <div className="text-xs text-green-600 mb-2">
                 <span className="font-medium">✅ Approved for Lab Processing</span>
@@ -410,9 +359,14 @@ function AppointmentCard({ appointment, patient, onReschedule, onApprove, onView
                 )}
               </div>
             )}
+            {appointment.resultsFile && (
+              <div className="text-xs text-blue-600 mb-2">
+                <span className="font-medium">📄 Results Uploaded:</span> {appointment.resultsFile.name}
+                <span className="ml-2">({(appointment.resultsFile.size / 1024).toFixed(2)} KB)</span>
+              </div>
+            )}
           </div>
         </div>
-
         <div className="flex items-center space-x-2">
           <button
             onClick={onReschedule}
@@ -422,15 +376,14 @@ function AppointmentCard({ appointment, patient, onReschedule, onApprove, onView
             <RefreshCw size={16} />
             <span className="text-sm">Reschedule</span>
           </button>
-          
           {!appointment.doctorApproved ? (
             <button
               onClick={onApprove}
               className="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1"
-              title="Approve & Forward to Lab"
+              title="Approve & Upload Results"
             >
               <CheckCircle size={16} />
-              <span>Approve & Forward</span>
+              <span>Approve & Upload</span>
             </button>
           ) : appointment.status === 'lab-completed' ? (
             <button
@@ -438,11 +391,11 @@ function AppointmentCard({ appointment, patient, onReschedule, onApprove, onView
               className="px-3 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-1"
               title="Review & Approve Results"
             >
-              <Eye size={16} />
+              <CheckCircle size={16} />
               <span>Review Results</span>
             </button>
           ) : (
-            <div className="flex items-center text-green-600" title="Approved for Lab">
+            <div className="flex items-center text-green-600" title="Approved">
               <CheckCircle size={20} />
               <span className="text-xs ml-1">Approved</span>
             </div>
@@ -464,17 +417,14 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
   const [newDate, setNewDate] = useState(appointment.date);
   const [newTime, setNewTime] = useState(appointment.time);
   const [reason, setReason] = useState('');
-
   const availableTimes = [
     '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
+    '14:00', '14:30', '15:00', '15:30', '16:00', '16:30',
   ];
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(newDate, newTime, reason);
   };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg max-w-md w-full mx-4">
@@ -485,10 +435,9 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
               <X size={20} />
             </button>
           </div>
-          <p className="text-sm text-gray-600 mt-1">Patient: {patient?.name}</p>
+          <p className="text-sm text-gray-600 mt-1">Patient: {patient?.name || 'Unknown'}</p>
         </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <div className="p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Current Date & Time
@@ -497,7 +446,6 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
               {appointment.date} at {appointment.time}
             </p>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               New Date
@@ -511,7 +459,6 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
               required
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               New Time
@@ -522,12 +469,11 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             >
-              {availableTimes.map(time => (
+              {availableTimes.map((time) => (
                 <option key={time} value={time}>{time}</option>
               ))}
             </select>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Reason for Reschedule
@@ -540,7 +486,6 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
               rows={3}
             />
           </div>
-
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
@@ -551,12 +496,13 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
             </button>
             <button
               type="submit"
+              onClick={handleSubmit}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               Reschedule
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -566,40 +512,41 @@ interface ApprovalModalProps {
   appointment: any;
   patient: any;
   onClose: () => void;
-  onApprove: (labTechnicianId?: string) => void;
+  onApprove: (labTechnicianId?: string, file?: File) => void;
 }
 
 function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalModalProps) {
   const [selectedLabTech, setSelectedLabTech] = useState('');
   const [notes, setNotes] = useState('');
-
+  const [file, setFile] = useState<File | null>(null);
   const labTechnicians = [
     { id: '4', name: 'James Brown', specialty: 'General Lab' },
     { id: '9', name: 'Lisa Johnson', specialty: 'Blood Analysis' },
     { id: '10', name: 'Mark Wilson', specialty: 'Radiology' },
   ];
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onApprove(selectedLabTech || undefined);
+    onApprove(selectedLabTech || undefined, file || undefined);
   };
-
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
   const totalPrice = appointment.tests.reduce((sum: number, test: any) => sum + test.price, 0);
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg max-w-lg w-full mx-4">
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Approve & Forward to Lab</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Approve & Upload Results</h3>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
               <X size={20} />
             </button>
           </div>
-          <p className="text-sm text-gray-600 mt-1">Patient: {patient?.name}</p>
+          <p className="text-sm text-gray-600 mt-1">Patient: {patient?.name || 'Unknown'}</p>
         </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <div className="p-6 space-y-4">
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">Test Details</h4>
             <div className="space-y-2">
@@ -615,7 +562,6 @@ function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalMod
               </div>
             </div>
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Assign to Lab Technician (Optional)
@@ -626,12 +572,30 @@ function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalMod
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Auto-assign to available technician</option>
-              {labTechnicians.map(tech => (
+              {labTechnicians.map((tech) => (
                 <option key={tech.id} value={tech.id}>{tech.name} - {tech.specialty}</option>
               ))}
             </select>
           </div>
-
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Upload Test Results (Optional)
+            </label>
+            <div className="flex items-center space-x-3">
+              <Upload size={20} className="text-gray-400" />
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.txt"
+                onChange={handleFileChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            {file && (
+              <p className="text-sm text-gray-600 mt-1">
+                Selected: {file.name} ({(file.size / 1024).toFixed(2)} KB)
+              </p>
+            )}
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Notes for Lab (Optional)
@@ -644,16 +608,14 @@ function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalMod
               rows={3}
             />
           </div>
-
           <div className="bg-green-50 p-4 rounded-lg">
             <div className="flex items-center space-x-2 text-green-800">
               <AlertCircle size={16} />
               <span className="text-sm font-medium">
-                By approving, you confirm the test requests are accurate and ready for lab processing.
+                {file ? 'Results will be uploaded and marked as lab-completed.' : 'By approving, you confirm the test requests are accurate and ready for lab processing.'}
               </span>
             </div>
           </div>
-
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
@@ -664,13 +626,14 @@ function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalMod
             </button>
             <button
               type="submit"
+              onClick={handleSubmit}
               className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
             >
               <Send size={16} />
-              <span>Approve & Forward</span>
+              <span>{file ? 'Approve & Upload Results' : 'Approve & Forward'}</span>
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -686,12 +649,11 @@ interface ResultsReviewModalProps {
 function ResultsReviewModal({ appointment, patient, onClose, onApprove }: ResultsReviewModalProps) {
   const [signature, setSignature] = useState('');
   const [comments, setComments] = useState('');
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onApprove(signature, comments);
   };
-
+  const mockResults = appointment.results || ['Sample result data'];
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -702,11 +664,9 @@ function ResultsReviewModal({ appointment, patient, onClose, onApprove }: Result
               <X size={20} />
             </button>
           </div>
-          <p className="text-sm text-gray-600 mt-1">Patient: {patient?.name}</p>
+          <p className="text-sm text-gray-600 mt-1">Patient: {patient?.name || 'Unknown'}</p>
         </div>
-        
         <div className="p-6 space-y-6">
-          {/* Lab Results Display */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h4 className="font-medium text-gray-900 mb-3 flex items-center">
               <FileText size={16} className="mr-2" />
@@ -717,22 +677,18 @@ function ResultsReviewModal({ appointment, patient, onClose, onApprove }: Result
                 <div key={index} className="bg-white p-3 rounded border">
                   <h5 className="font-medium text-gray-900">{test.name}</h5>
                   <div className="mt-2 text-sm text-gray-600">
-                    <p><strong>Status:</strong> Completed</p>
-                    <p><strong>Result:</strong> Normal ranges detected</p>
-                    <p><strong>Lab Tech:</strong> James Brown</p>
-                    <p><strong>Completed:</strong> {new Date().toLocaleString()}</p>
-                  </div>
-                  <div className="mt-2">
-                    <button className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1">
-                      <FileText size={14} />
-                      <span>View Detailed Report</span>
-                    </button>
+                    <p><strong>Status:</strong> {appointment.status}</p>
+                    <p><strong>Result:</strong> {mockResults[index] || 'No result available'}</p>
+                    <p><strong>Lab Tech:</strong> {appointment.assignedLabTech || 'Unknown'}</p>
+                    <p><strong>Completed:</strong> {appointment.completionTime || new Date().toLocaleString()}</p>
+                    {appointment.resultsFile && (
+                      <p><strong>Uploaded File:</strong> {appointment.resultsFile.name} ({(appointment.resultsFile.size / 1024).toFixed(2)} KB)</p>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           </div>
-
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -746,7 +702,6 @@ function ResultsReviewModal({ appointment, patient, onClose, onApprove }: Result
                 rows={4}
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Digital Signature
@@ -766,7 +721,6 @@ function ResultsReviewModal({ appointment, patient, onClose, onApprove }: Result
                 By typing your name, you digitally sign and approve these results
               </p>
             </div>
-
             <div className="bg-blue-50 p-4 rounded-lg">
               <div className="flex items-center space-x-2 text-blue-800">
                 <AlertCircle size={16} />
@@ -775,7 +729,6 @@ function ResultsReviewModal({ appointment, patient, onClose, onApprove }: Result
                 </span>
               </div>
             </div>
-
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
@@ -796,7 +749,7 @@ function ResultsReviewModal({ appointment, patient, onClose, onApprove }: Result
         </div>
       </div>
     </div>
-  ); 
+  );
 }
 
 export default DoctorDashboard;

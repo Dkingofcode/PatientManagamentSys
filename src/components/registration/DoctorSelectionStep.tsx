@@ -6,19 +6,16 @@ import { Calendar, Clock } from 'lucide-react';
 interface DoctorSelectionStepProps {
   data: Partial<RegistrationData>;
   updateData: (data: Partial<RegistrationData>) => void;
-  onPrev: () => void;
-  onComplete: () => void;
+  onPrev?: () => void;
+  onNext: () => void;
   currentStep: number;
 }
 
-function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSelectionStepProps) {
+function DoctorSelectionStep({ data, updateData, onPrev, onNext }: DoctorSelectionStepProps) {
   const { doctors } = useAppointments();
   const [selectedDoctor, setSelectedDoctor] = useState(data.doctorId || '');
   const [selectedDate, setSelectedDate] = useState(data.appointmentDate || '');
   const [selectedTime, setSelectedTime] = useState(data.appointmentTime || '');
-
-  // NEW: Lab & X-ray multi-select
-  const [selectedServices, setSelectedServices] = useState<string[]>(data.tests?.map(t => t.id) || []);
 
   const availableTimes = [
     '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
@@ -40,38 +37,18 @@ function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSel
     updateData({ appointmentTime: time });
   };
 
-  // NEW: Handle Lab/X-ray toggle
-  const handleServiceToggle = (service: { id: string, name: string }) => {
-    let updatedServices;
-    if (selectedServices.includes(service.id)) {
-      updatedServices = selectedServices.filter(s => s !== service.id);
-    } else {
-      updatedServices = [...selectedServices, service.id];
-    }
-    setSelectedServices(updatedServices);
-    // updateData({ tests: updatedServices.map(id => ({ id, name: serviceOptions.find(s => s.id === id)?.name || '' })) });
-  };
-
-  const handleComplete = () => {
+  const handleNext = () => {
     if (selectedDoctor && selectedDate && selectedTime) {
       updateData({
         doctorId: selectedDoctor,
         appointmentDate: selectedDate,
         appointmentTime: selectedTime,
-//        tests: selectedServices.map(id => ({ id, name: serviceOptions.find(s => s.id === id)?.name || '' }))
       });
-      onComplete();
+      onNext();
     }
   };
 
   const isCompleteEnabled = selectedDoctor && selectedDate && selectedTime;
-
-  // NEW: Service options for multi-select
-  const serviceOptions = [
-    { id: 'sonography', name: 'Sonography' },
-    { id: 'xray', name: 'Radiography' },
-    { id: 'lab', name: 'Lab' }
-  ];
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -126,33 +103,6 @@ function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSel
         </div>
       </div>
 
-      {/* NEW: Lab & X-ray Multi-Select */}
-      {selectedDoctor && (
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Services</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {serviceOptions.map(service => (
-              <div
-                key={service.id}
-                onClick={() => handleServiceToggle(service)}
-                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  selectedServices.includes(service.id)
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }`}
-              >
-                <h4 className="font-semibold text-gray-900">{service.name}</h4>
-                {selectedServices.includes(service.id) && (
-                  <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center mt-2">
-                    <span className="text-white text-xs">✓</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Date and Time Selection */}
       {selectedDoctor && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -202,20 +152,21 @@ function DoctorSelectionStep({ data, updateData, onPrev, onComplete }: DoctorSel
             <p><strong>Doctor:</strong> {doctors.find(d => d.id === selectedDoctor)?.name}</p>
             <p><strong>Date:</strong> {new Date(selectedDate).toLocaleDateString()}</p>
             <p><strong>Time:</strong> {selectedTime}</p>
-            <p><strong>Tests:</strong> {selectedServices.map(id => serviceOptions.find(s => s.id === id)?.name).join(', ')}</p>
           </div>
         </div>
       )}
 
       <div className="flex justify-between">
+        {onPrev && (
+          <button
+            onClick={onPrev}
+            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Previous
+          </button>
+        )}
         <button
-          onClick={onPrev}
-          className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-        >
-          Previous
-        </button>
-        <button
-          onClick={handleComplete}
+          onClick={handleNext}
           disabled={!isCompleteEnabled}
           className="px-6 py-2 bg-purple-800 text-white rounded-lg hover:bg-purple-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
