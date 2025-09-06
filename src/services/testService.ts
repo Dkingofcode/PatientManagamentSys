@@ -1,4 +1,3 @@
-// src/services/testService.ts
 export async function fetchTests(
   token: string,
   options: {
@@ -30,37 +29,29 @@ export async function fetchTests(
     },
   };
 
-  // Create a fetch with timeout
-  const fetchWithTimeout = new Promise(async (resolve, reject) => {
-    const timer = setTimeout(() => {
-      console.warn("Fetch timed out, returning dummy data...");
-      resolve(dummyData);
-    }, 7000); // 7 seconds
 
-    try {
-      const res = await fetch(
-        `https:localhost:8000/api/tests/?${params.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  return dummyData;
+//   try {
+//     const res = await fetch(
+//       `https://localhost:8000/api/tests/?${params.toString()}`,
+//       {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       }
+//     );
 
-      clearTimeout(timer);
+//     if (!res.ok) {
+//       console.error("API error, using dummy data...");
+//       return dummyData;
+//     }
 
-      if (!res.ok) {
-        console.error("API error, using dummy data...");
-        resolve(dummyData);
-      } else {
-        resolve(await res.json());
-      }
-    } catch (err) {
-      clearTimeout(timer);
-      console.error("Fetch failed, using dummy data...", err);
-      resolve(dummyData);
-    }
-  });
+//     return await res.json();
+//   } catch (err) {
+//     console.error("Fetch failed, using dummy data...", err);
+//     return dummyData;
+//   }
+// }
 
-  return fetchWithTimeout;
+
 }

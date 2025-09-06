@@ -500,13 +500,20 @@ const dummyTestAssignments: Appointment[] = [
   },
 ];
 
+
 export function AppointmentProvider({ children }: { children: ReactNode }) {
   const [patients, setPatients] = useState<Patient[]>(dummyPatients);
   const [appointments, setAppointments] =
-    useState<Appointment[]>(dummyTestAssignments);
+  useState<Appointment[]>(dummyTestAssignments);
   const [doctors] = useState<Doctor[]>(mockDoctors);
-  const [availableTests, setAvailableTests] = useState<TestType[]>([]);
+const [availableTests, setAvailableTests] = useState<TestType[]>([]);
 
+  // Use useEffect to set state only when dummyTestAssignments changes
+  useEffect(() => {
+    const tests = dummyTestAssignments.flatMap((dummyTests) => dummyTests.tests);
+    console.log(tests);
+    setAvailableTests(tests);
+  }, []); // Empty dependency array ensures this runs only once on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -520,19 +527,19 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
         console.error("Error fetching data", err);
         // Fallback to dummy data if API fails
         setPatients(dummyPatients);
-        setAppointments(dummyTestAssignments);
+        //setAppointments(dummyTestAssignments);
       }
     };
     fetchData();
 
-    const socket = io("http://localhost:8000");
-    socket.on("appointments-changed", () => {
-      fetchData();
-    });
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+  //   const socket = io("http://localhost:8000");
+  //   socket.on("appointments-changed", () => {
+  //     fetchData();
+  //   });
+  //   return () => {
+  //     socket.disconnect();
+  //   };
+   }, []);
 
   const addPatient = async (patient: Patient) => {
     try {
@@ -781,125 +788,126 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
     return discounts[category] || 0;
   };
 
-  const refreshTests = async (options?: {
-    category?: string;
-    search?: string;
-  }) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    try {
-      const data = await fetchTests(token, options);
-      const tests = (data as { tests: TestType[] }).tests;
-      setAvailableTests(tests);
-    } catch (err) {
-      console.error("Error fetching tests", err);
-      // Fallback to mock tests
-      setAvailableTests([
-        {
-          id: "t1",
-          name: "Complete Blood Count",
-          price: 50,
-          prices: {
-            "walk-in": 50,
-            referral: 45,
-            hmo: 40,
-            hospital: 42,
-            corporate: 48,
-          },
-          duration: 30,
-          department: "Hematology",
-        },
-        {
-          id: "t2",
-          name: "Lipid Panel",
-          price: 60,
-          prices: {
-            "walk-in": 60,
-            referral: 55,
-            hmo: 50,
-            hospital: 52,
-            corporate: 58,
-          },
-          duration: 45,
-          department: "Biochemistry",
-        },
-        {
-          id: "t3",
-          name: "Urinalysis",
-          price: 30,
-          prices: {
-            "walk-in": 30,
-            referral: 27,
-            hmo: 25,
-            hospital: 26,
-            corporate: 28,
-          },
-          duration: 20,
-          department: "Biochemistry",
-        },
-        {
-          id: "t4",
-          name: "Blood Glucose",
-          price: 25,
-          prices: {
-            "walk-in": 25,
-            referral: 22,
-            hmo: 20,
-            hospital: 21,
-            corporate: 23,
-          },
-          duration: 15,
-          department: "Biochemistry",
-        },
-        {
-          id: "t5",
-          name: "Thyroid Function Test",
-          price: 70,
-          prices: {
-            "walk-in": 70,
-            referral: 65,
-            hmo: 60,
-            hospital: 62,
-            corporate: 68,
-          },
-          duration: 60,
-          department: "Immunology",
-        },
-        {
-          id: "t6",
-          name: "Microbiology Culture",
-          price: 80,
-          prices: {
-            "walk-in": 80,
-            referral: 75,
-            hmo: 70,
-            hospital: 72,
-            corporate: 78,
-          },
-          duration: 120,
-          department: "Microbiology",
-        },
-        {
-          id: "t7",
-          name: "Electrolyte Panel",
-          price: 55,
-          prices: {
-            "walk-in": 55,
-            referral: 50,
-            hmo: 45,
-            hospital: 47,
-            corporate: 53,
-          },
-          duration: 40,
-          department: "Biochemistry",
-        },
-      ]);
-    }
-  };
+  // const refreshTests = async (options?: {
+  //   category?: string;
+  //   search?: string;
+  // }) => {
+  //   const token = localStorage.getItem("token");
+  //   if (!token) return;
+  //   try {
+  //     const data = await fetchTests(token, options);
+  //    // const tests = (data as { tests: TestType[] }).tests;
+  //    const tests = [];
+  //    setAvailableTests(tests);
+  //   } catch (err) {
+  //     console.error("Error fetching tests", err);
+  //     // Fallback to mock tests
+  //     setAvailableTests([
+  //       {
+  //         id: "t1",
+  //         name: "Complete Blood Count",
+  //         price: 50,
+  //         prices: {
+  //           "walk-in": 50,
+  //           referral: 45,
+  //           hmo: 40,
+  //           hospital: 42,
+  //           corporate: 48,
+  //         },
+  //         duration: 30,
+  //         department: "Hematology",
+  //       },
+  //       {
+  //         id: "t2",
+  //         name: "Lipid Panel",
+  //         price: 60,
+  //         prices: {
+  //           "walk-in": 60,
+  //           referral: 55,
+  //           hmo: 50,
+  //           hospital: 52,
+  //           corporate: 58,
+  //         },
+  //         duration: 45,
+  //         department: "Biochemistry",
+  //       },
+  //       {
+  //         id: "t3",
+  //         name: "Urinalysis",
+  //         price: 30,
+  //         prices: {
+  //           "walk-in": 30,
+  //           referral: 27,
+  //           hmo: 25,
+  //           hospital: 26,
+  //           corporate: 28,
+  //         },
+  //         duration: 20,
+  //         department: "Biochemistry",
+  //       },
+  //       {
+  //         id: "t4",
+  //         name: "Blood Glucose",
+  //         price: 25,
+  //         prices: {
+  //           "walk-in": 25,
+  //           referral: 22,
+  //           hmo: 20,
+  //           hospital: 21,
+  //           corporate: 23,
+  //         },
+  //         duration: 15,
+  //         department: "Biochemistry",
+  //       },
+  //       {
+  //         id: "t5",
+  //         name: "Thyroid Function Test",
+  //         price: 70,
+  //         prices: {
+  //           "walk-in": 70,
+  //           referral: 65,
+  //           hmo: 60,
+  //           hospital: 62,
+  //           corporate: 68,
+  //         },
+  //         duration: 60,
+  //         department: "Immunology",
+  //       },
+  //       {
+  //         id: "t6",
+  //         name: "Microbiology Culture",
+  //         price: 80,
+  //         prices: {
+  //           "walk-in": 80,
+  //           referral: 75,
+  //           hmo: 70,
+  //           hospital: 72,
+  //           corporate: 78,
+  //         },
+  //         duration: 120,
+  //         department: "Microbiology",
+  //       },
+  //       {
+  //         id: "t7",
+  //         name: "Electrolyte Panel",
+  //         price: 55,
+  //         prices: {
+  //           "walk-in": 55,
+  //           referral: 50,
+  //           hmo: 45,
+  //           hospital: 47,
+  //           corporate: 53,
+  //         },
+  //         duration: 40,
+  //         department: "Biochemistry",
+  //       },
+  //     ]);
+  //   }
+  // };
 
-  useEffect(() => {
-    refreshTests();
-  }, []);
+  // useEffect(() => {
+  //   refreshTests();
+  // }, []);
 
   return (
     <AppointmentContext.Provider
@@ -923,7 +931,7 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
         getApprovedAppointments,
         availableTests,
         getDiscountPercent,
-        refreshTests,
+       // refreshTests,
       }}
     >
       {children}
