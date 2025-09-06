@@ -1,46 +1,48 @@
-import { useState } from 'react';
-import Layout from '../components/Layout';
-import { Calendar, FileText, Clock, Download, Shield, Eye } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext.tsx';
+import React, { useState } from "react";
+import Layout from "../components/Layout";
+import { Calendar, FileText, Clock, Download, Shield, Eye } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext.tsx";
 function PatientDashboard() {
   // const { user } = useAuth();
   const [show2FA, setShow2FA] = useState(false);
-  const [verificationCode, setVerificationCode] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'upcoming' | 'completed' | 'pending' | 'ready'>('all');
-const { user } = useAuth();
+  const [verificationCode, setVerificationCode] = useState("");
+  const [activeFilter, setActiveFilter] = useState<
+    "all" | "upcoming" | "completed" | "pending" | "ready"
+  >("all");
+  const { user } = useAuth();
   const appointments = [
     {
-      id: '1',
-      date: '2025-01-15',
-      time: '10:00 AM',
-      doctor: 'Dr. Michael Smith',
-      tests: ['Blood Test', 'Urine Test'],
-      status: 'scheduled',
+      id: "1",
+      date: "2025-01-15",
+      time: "10:00 AM",
+      doctor: "Dr. Michael Smith",
+      tests: ["Blood Test", "Urine Test"],
+      status: "scheduled",
     },
     {
-      id: '2',
-      date: '2025-01-10',
-      time: '2:00 PM',
-      doctor: 'Dr. Emily Wilson',
-      tests: ['X-Ray'],
-      status: 'completed',
+      id: "2",
+      date: "2025-01-10",
+      time: "2:00 PM",
+      doctor: "Dr. Emily Wilson",
+      tests: ["X-Ray"],
+      status: "completed",
     },
   ];
 
   const testResults = [
     {
-      id: '1',
-      date: '2025-01-10',
-      test: 'X-Ray',
-      doctor: 'Dr. Emily Wilson',
-      status: 'ready',
+      id: "1",
+      date: "2025-01-10",
+      test: "X-Ray",
+      doctor: "Dr. Emily Wilson",
+      status: "ready",
     },
     {
-      id: '2',
-      date: '2025-01-08',
-      test: 'Blood Test',
-      doctor: 'Dr. Michael Smith',
-      status: 'ready',
+      id: "2",
+      date: "2025-01-08",
+      test: "Blood Test",
+      doctor: "Dr. Michael Smith",
+      status: "ready",
     },
   ];
 
@@ -50,50 +52,50 @@ const { user } = useAuth();
   };
 
   const verify2FA = () => {
-    if (verificationCode === '123456') {
+    if (verificationCode === "123456") {
       setShow2FA(false);
-      setVerificationCode('');
-      alert('Results downloaded successfully!');
+      setVerificationCode("");
+      alert("Results downloaded successfully!");
     } else {
-      alert('Invalid verification code. Try: 123456');
+      alert("Invalid verification code. Try: 123456");
     }
   };
 
   const stats = [
     {
-      label: 'Upcoming Appointments',
-      value: appointments.filter(apt => apt.status === 'scheduled').length,
+      label: "Upcoming Appointments",
+      value: appointments.filter((apt) => apt.status === "scheduled").length,
       icon: Calendar,
-      color: 'bg-gray-700',
+      color: "bg-gray-700",
     },
     {
-      label: 'Completed Tests',
-      value: appointments.filter(apt => apt.status === 'completed').length,
+      label: "Completed Tests",
+      value: appointments.filter((apt) => apt.status === "completed").length,
       icon: FileText,
-      color: 'bg-gray-700',
+      color: "bg-gray-700",
     },
     {
-      label: 'Pending Results',
-      value: testResults.filter(result => result.status === 'pending').length,
+      label: "Pending Results",
+      value: testResults.filter((result) => result.status === "pending").length,
       icon: Clock,
-      color: 'bg-gray-700',
+      color: "bg-gray-700",
     },
     {
-      label: 'Available Results',
-      value: testResults.filter(result => result.status === 'ready').length,
+      label: "Available Results",
+      value: testResults.filter((result) => result.status === "ready").length,
       icon: Download,
-      color: 'bg-gray-700',
+      color: "bg-gray-700",
     },
   ];
 
   return (
-    <Layout title={`Welcome,${user?.firstName || 'User'}!`}>
+    <Layout title={`Welcome,${user?.firstName || "User"}!`}>
       <div className="space-y-6">
         {/* Reset Filter */}
         <div className="flex justify-end">
           <button
             className="mb-4 px-4 py-2 text-sm text-blue-600 hover:underline"
-            onClick={() => setActiveFilter('all')}
+            onClick={() => setActiveFilter("all")}
           >
             Show All
           </button>
@@ -108,10 +110,14 @@ const { user } = useAuth();
                 key={stat.label}
                 className="bg-white rounded-lg shadow-sm p-6 cursor-pointer hover:bg-gray-100 transition"
                 onClick={() => {
-                  if (stat.label.includes('Upcoming')) setActiveFilter('upcoming');
-                  else if (stat.label.includes('Completed')) setActiveFilter('completed');
-                  else if (stat.label.includes('Pending')) setActiveFilter('pending');
-                  else if (stat.label.includes('Available')) setActiveFilter('ready');
+                  if (stat.label.includes("Upcoming"))
+                    setActiveFilter("upcoming");
+                  else if (stat.label.includes("Completed"))
+                    setActiveFilter("completed");
+                  else if (stat.label.includes("Pending"))
+                    setActiveFilter("pending");
+                  else if (stat.label.includes("Available"))
+                    setActiveFilter("ready");
                 }}
               >
                 <div className="flex items-center">
@@ -119,7 +125,9 @@ const { user } = useAuth();
                     <Icon size={24} className="text-white" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {stat.value}
+                    </p>
                     <p className="text-sm text-gray-600">{stat.label}</p>
                   </div>
                 </div>
@@ -132,33 +140,41 @@ const { user } = useAuth();
           {/* Appointments */}
           <div className="bg-white rounded-lg shadow-sm">
             <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">My Appointments</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                My Appointments
+              </h2>
             </div>
             <div className="divide-y divide-gray-200">
               {appointments
                 .filter((appointment) => {
-                  if (activeFilter === 'all') return true;
-                  if (activeFilter === 'upcoming') return appointment.status === 'scheduled';
-                  if (activeFilter === 'completed') return appointment.status === 'completed';
+                  if (activeFilter === "all") return true;
+                  if (activeFilter === "upcoming")
+                    return appointment.status === "scheduled";
+                  if (activeFilter === "completed")
+                    return appointment.status === "completed";
                   return true;
                 })
                 .map((appointment) => (
                   <div key={appointment.id} className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium text-gray-900">{appointment.doctor}</h3>
+                        <h3 className="font-medium text-gray-900">
+                          {appointment.doctor}
+                        </h3>
                         <p className="text-sm text-gray-600">
-                          {appointment.tests.join(', ')}
+                          {appointment.tests.join(", ")}
                         </p>
                         <p className="text-sm text-gray-500">
                           {appointment.date} at {appointment.time}
                         </p>
                       </div>
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        appointment.status === 'completed'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                          appointment.status === "completed"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
                         {appointment.status}
                       </span>
                     </div>
@@ -178,15 +194,19 @@ const { user } = useAuth();
             <div className="divide-y divide-gray-200">
               {testResults
                 .filter((result) => {
-                  if (activeFilter === 'pending') return result.status === 'pending';
-                  if (activeFilter === 'ready') return result.status === 'ready';
+                  if (activeFilter === "pending")
+                    return result.status === "pending";
+                  if (activeFilter === "ready")
+                    return result.status === "ready";
                   return true;
                 })
                 .map((result) => (
                   <div key={result.id} className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium text-gray-900">{result.test}</h3>
+                        <h3 className="font-medium text-gray-900">
+                          {result.test}
+                        </h3>
                         <p className="text-sm text-gray-600">{result.doctor}</p>
                         <p className="text-sm text-gray-500">{result.date}</p>
                       </div>
@@ -221,7 +241,8 @@ const { user } = useAuth();
               </div>
               <div className="p-6">
                 <p className="text-gray-600 mb-4">
-                  For your security, please enter the verification code sent to your email to access your test results.
+                  For your security, please enter the verification code sent to
+                  your email to access your test results.
                 </p>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">

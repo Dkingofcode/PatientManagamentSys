@@ -1,6 +1,6 @@
-import  { useState } from 'react';
-import type { RegistrationData } from '../../pages/PatientRegistration';
-import { useAppointments } from '../../contexts/AppointmentContext';
+import React, { useState } from "react";
+import type { RegistrationData } from "../../pages/PatientRegistration";
+import { useAppointments } from "../../contexts/AppointmentContext";
 //import { CreditCard, Banknote, ArrowLeftRight, Calculator } from 'lucide-react';
 //import { getTestPrice } from '../../utils/getTestPrice';
 
@@ -11,14 +11,19 @@ interface PaymentMethodStepProps {
   onPrev: () => void;
 }
 
-function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodStepProps) {
-  const {  getDiscountPercent } = useAppointments();
+function PaymentMethodStep({
+  data,
+  updateData,
+  onNext,
+  onPrev,
+}: PaymentMethodStepProps) {
+  const { getDiscountPercent } = useAppointments();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>(
-    data.paymentMethods?.[0] || ''
+    data.paymentMethods?.[0] || ""
   );
-  const [paymentAmounts, setPaymentAmounts] = useState<{ [key: string]: number }>(
-    data.paymentAmounts || {}
-  );
+  const [paymentAmounts, setPaymentAmounts] = useState<{
+    [key: string]: number;
+  }>(data.paymentAmounts || {});
   const [creditAmount, setCreditAmount] = useState(data.creditAmount || 0);
 
   // Calculate pricing based on category
@@ -28,75 +33,75 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
   // };
 
   const subtotal = data.tests?.reduce((sum, test) => sum + test.price, 0) || 0;
-  const discountPercent = getDiscountPercent( 'walk-in');
+  const discountPercent = getDiscountPercent("walk-in");
   const discountAmount = subtotal * (discountPercent / 100);
   const totalAmount = subtotal - discountAmount;
 
   const paymentOptions = [
-    { 
-      id: 'cash', 
-      label: 'Cash', 
-      icon: '💵',
-      color: 'border-green-500 bg-green-50',
-      iconBg: 'bg-green-500'
+    {
+      id: "cash",
+      label: "Cash",
+      icon: "💵",
+      color: "border-green-500 bg-green-50",
+      iconBg: "bg-green-500",
     },
-    { 
-      id: 'pos', 
-      label: 'POS/Card', 
-      icon: '💳',
-      color: 'border-blue-500 bg-blue-50',
-      iconBg: 'bg-blue-500'
+    {
+      id: "pos",
+      label: "POS/Card",
+      icon: "💳",
+      color: "border-blue-500 bg-blue-50",
+      iconBg: "bg-blue-500",
     },
-    { 
-      id: 'transfer', 
-      label: 'Bank Transfer', 
-      icon: '💸',
-      color: 'border-purple-500 bg-purple-50',
-      iconBg: 'bg-purple-500'
+    {
+      id: "transfer",
+      label: "Bank Transfer",
+      icon: "💸",
+      color: "border-purple-500 bg-purple-50",
+      iconBg: "bg-purple-500",
     },
-    { 
-      id: 'cash-transfer', 
-      label: 'Cash + Transfer', 
-      icon: '💰',
-      color: 'border-indigo-500 bg-indigo-50',
-      iconBg: 'bg-indigo-500'
+    {
+      id: "cash-transfer",
+      label: "Cash + Transfer",
+      icon: "💰",
+      color: "border-indigo-500 bg-indigo-50",
+      iconBg: "bg-indigo-500",
     },
-    { 
-      id: 'pos-transfer', 
-      label: 'POS + Transfer', 
-      icon: '💳',
-      color: 'border-cyan-500 bg-cyan-50',
-      iconBg: 'bg-cyan-500'
+    {
+      id: "pos-transfer",
+      label: "POS + Transfer",
+      icon: "💳",
+      color: "border-cyan-500 bg-cyan-50",
+      iconBg: "bg-cyan-500",
     },
-    { 
-      id: 'pos-cash', 
-      label: 'POS + Cash', 
-      icon: '💵',
-      color: 'border-teal-500 bg-teal-50',
-      iconBg: 'bg-teal-500'
+    {
+      id: "pos-cash",
+      label: "POS + Cash",
+      icon: "💵",
+      color: "border-teal-500 bg-teal-50",
+      iconBg: "bg-teal-500",
     },
-    { 
-      id: 'credit', 
-      label: 'Credit', 
-      icon: '📋',
-      color: 'border-orange-500 bg-orange-50',
-      iconBg: 'bg-orange-500'
+    {
+      id: "credit",
+      label: "Credit",
+      icon: "📋",
+      color: "border-orange-500 bg-orange-50",
+      iconBg: "bg-orange-500",
     },
   ];
 
   const handlePaymentMethodSelect = (methodId: string) => {
     setSelectedPaymentMethod(methodId);
-    
-    if (methodId === 'credit') {
+
+    if (methodId === "credit") {
       setCreditAmount(totalAmount);
       setPaymentAmounts({});
     } else {
       setCreditAmount(0);
-      if (methodId.includes('-')) {
-        const methods = methodId.split('-');
+      if (methodId.includes("-")) {
+        const methods = methodId.split("-");
         const splitAmount = totalAmount / methods.length;
         const newAmounts: { [key: string]: number } = {};
-        methods.forEach(method => {
+        methods.forEach((method) => {
           newAmounts[method] = splitAmount;
         });
         setPaymentAmounts(newAmounts);
@@ -107,11 +112,14 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
   };
 
   const handleAmountChange = (methodId: string, amount: number) => {
-    setPaymentAmounts(prev => ({ ...prev, [methodId]: amount }));
+    setPaymentAmounts((prev) => ({ ...prev, [methodId]: amount }));
   };
 
   const getTotalPaid = () => {
-    return Object.values(paymentAmounts).reduce((sum, amount) => sum + amount, 0);
+    return Object.values(paymentAmounts).reduce(
+      (sum, amount) => sum + amount,
+      0
+    );
   };
 
   const getRemainingAmount = () => {
@@ -119,9 +127,9 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
   };
 
   const getPaymentMethods = () => {
-    if (selectedPaymentMethod === 'credit') return ['credit'];
-    if (selectedPaymentMethod.includes('-')) {
-      return selectedPaymentMethod.split('-');
+    if (selectedPaymentMethod === "credit") return ["credit"];
+    if (selectedPaymentMethod.includes("-")) {
+      return selectedPaymentMethod.split("-");
     }
     return [selectedPaymentMethod];
   };
@@ -137,7 +145,7 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
   };
 
   const isValidPayment = () => {
-    if (selectedPaymentMethod === 'credit') {
+    if (selectedPaymentMethod === "credit") {
       return creditAmount > 0;
     }
     return getTotalPaid() >= totalAmount;
@@ -146,21 +154,25 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Payment Processing</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Payment Processing
+        </h2>
       </div>
 
       {/* Payment Summary */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Summary</h3>
-        
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Payment Summary
+        </h3>
+
         <div className="space-y-3 mb-4">
           {data.tests?.map((test, index) => (
             <div key={index} className="flex justify-between items-center">
               <span className="text-gray-700">{test.name}</span>
               <div className="flex items-center space-x-2">
-                {test.price !== test.prices['walk-in'] && (
+                {test.price !== test.prices["walk-in"] && (
                   <span className="line-through text-gray-400 text-sm">
-                    ${test.prices['walk-in']}
+                    ${test.prices["walk-in"]}
                   </span>
                 )}
                 <span className="font-medium">${test.price}</span>
@@ -179,8 +191,10 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
 
       {/* Payment Method Selection */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Payment Method</h3>
-        
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Select Payment Method
+        </h3>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {paymentOptions.map((option) => (
             <button
@@ -189,31 +203,41 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
               className={`p-4 rounded-lg border-2 transition-all ${
                 selectedPaymentMethod === option.id
                   ? option.color
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
               }`}
             >
               <div className="flex flex-col items-center">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                  selectedPaymentMethod === option.id ? option.iconBg : 'bg-gray-100'
-                } text-white text-xl`}>
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    selectedPaymentMethod === option.id
+                      ? option.iconBg
+                      : "bg-gray-100"
+                  } text-white text-xl`}
+                >
                   {option.icon}
                 </div>
-                <span className="text-sm font-medium text-center">{option.label}</span>
+                <span className="text-sm font-medium text-center">
+                  {option.label}
+                </span>
               </div>
             </button>
           ))}
         </div>
 
         {/* Payment Amount Inputs */}
-        {selectedPaymentMethod && selectedPaymentMethod !== 'credit' && (
+        {selectedPaymentMethod && selectedPaymentMethod !== "credit" && (
           <div className="space-y-4">
-            <h4 className="text-md font-semibold text-gray-900">Enter Payment Amounts</h4>
+            <h4 className="text-md font-semibold text-gray-900">
+              Enter Payment Amounts
+            </h4>
             {getPaymentMethods().map((methodId) => {
-              const method = paymentOptions.find(opt => opt.id === methodId);
+              const method = paymentOptions.find((opt) => opt.id === methodId);
               return (
                 <div key={methodId} className="flex items-center space-x-4">
                   <div className="w-20">
-                    <span className="text-sm font-medium text-gray-700">{method?.label || methodId}</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {method?.label || methodId}
+                    </span>
                   </div>
                   <div className="flex-1">
                     <input
@@ -221,8 +245,13 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
                       min="0"
                       max={totalAmount}
                       step="0.01"
-                      value={paymentAmounts[methodId] || ''}
-                      onChange={(e) => handleAmountChange(methodId, parseFloat(e.target.value) || 0)}
+                      value={paymentAmounts[methodId] || ""}
+                      onChange={(e) =>
+                        handleAmountChange(
+                          methodId,
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="0.00"
                     />
@@ -234,17 +263,21 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
         )}
 
         {/* Credit Amount Input */}
-        {selectedPaymentMethod === 'credit' && (
+        {selectedPaymentMethod === "credit" && (
           <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-orange-800">Credit Amount</span>
+              <span className="text-sm font-medium text-orange-800">
+                Credit Amount
+              </span>
               <input
                 type="number"
                 min="0"
                 max={totalAmount}
                 step="0.01"
                 value={creditAmount}
-                onChange={(e) => setCreditAmount(parseFloat(e.target.value) || 0)}
+                onChange={(e) =>
+                  setCreditAmount(parseFloat(e.target.value) || 0)
+                }
                 className="w-32 px-3 py-2 border border-orange-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="0.00"
               />
@@ -265,11 +298,17 @@ function PaymentMethodStep({ data, updateData, onNext, onPrev }: PaymentMethodSt
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Amount Paid</p>
-            <p className="text-2xl font-bold text-green-600">${getTotalPaid()}</p>
+            <p className="text-2xl font-bold text-green-600">
+              ${getTotalPaid()}
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-600 mb-1">Remaining</p>
-            <p className={`text-2xl font-bold ${getRemainingAmount() > 0 ? 'text-red-600' : 'text-green-600'}`}>
+            <p
+              className={`text-2xl font-bold ${
+                getRemainingAmount() > 0 ? "text-red-600" : "text-green-600"
+              }`}
+            >
               ${getRemainingAmount()}
             </p>
           </div>

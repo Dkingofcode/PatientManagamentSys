@@ -1,303 +1,9 @@
-// import { createContext, useContext, useEffect, useState } from "react";
-// import type { ReactNode } from "react";
-// import { fetchTests } from "../services/testService";
-
-// export interface Patient {
-//   id: string;
-//   name: string;
-//   email: string;
-//   phone: string;
-//   dateOfBirth: string;
-//   gender: string;
-//   category: "walk-in" | "referral" | "corporate" | "hospital" | "hmo";
-//   address?: string;
-//   registeredBy?: string;
-//   registeredById?: string;
-//   emergencyContact?: {
-//     name: string;
-//     phone: string;
-//     relationship: string;
-//   };
-//   insurance: {
-//     provider: string;
-//     policyNumber: string;
-//     coverageDetails?: string;
-//     groupNumber?: string;
-//   };
-//   medicalHistory?: string;
-//   registrationDate?: string;
-//   paymentInfo?: {
-//     selectedPaymentMethod?: string;
-//     paymentMethods?: string[];
-//     paymentAmounts?: { [key: string]: number };
-//     creditAmount?: number;
-//     totalAmount?: number;
-//     totalPaid?: number;
-//     remainingBalance?: number;
-//     processedBy?: string;
-//     processedById?: string;
-//     processedAt?: string;
-//   };
-// }
-
-// export interface TestType {
-//   id: string;
-//   name: string;
-//   price: number;
-//   prices: {
-//     "walk-in": number;
-//     referral: number;
-//     hmo: number;
-//     hospital: number;
-//     corporate: number;
-//   };
-//   duration: number;
-//   department: string;
-//   description?: string;
-// }
-
-// export interface Appointment {
-//   id: string;
-//   patientId: string;
-//   doctorId: string;
-//   date: string;
-//   time: string;
-//   tests: TestType[];
-//   status: "scheduled" | "in-progress" | "lab-completed" | "completed" | "cancelled";
-//   doctorApproved: boolean;
-//   labAssigned: boolean;
-//   assignedLabTech?: string;
-//   approvedAt?: string;
-//   doctorSignature?: string;
-//   doctorComments?: string;
-//   finalizedAt?: string;
-//   remarks?: string;
-//   results?: string[];
-//   rescheduleHistory?: {
-//     originalDate: string;
-//     originalTime: string;
-//     newDate: string;
-//     newTime: string;
-//     timestamp: string;
-//     reason?: string;
-//   }[];
-//   createdAt?: string;
-//   updatedAt?: string;
-// }
-
-// export interface Doctor {
-//   id: string;
-//   name: string;
-//   specialty: string;
-//   profileImage: string;
-//   availability: boolean;
-//   nextAvailable?: string;
-// }
-
-// interface AppointmentContextType {
-//   patients: Patient[];
-//   appointments: Appointment[];
-//   doctors: Doctor[];
-//   addPatient: (patient: Patient) => void;
-//   addAppointment: (appointment: Appointment) => void;
-//   updateAppointment: (id: string, updates: Partial<Appointment>) => void;
-//   getPatientById: (id: string) => Patient | undefined;
-//   getAppointmentsByDoctor: (doctorId: string) => Appointment[];
-//   getAppointmentsByDate: (date: string) => Appointment[];
-//   getPatientsByFrontDesk: (frontDeskId: string) => Patient[];
-//   getAppointmentsByFrontDesk: (frontDeskId: string) => Appointment[];
-//   rescheduleAppointment: (id: string, newDate: string, newTime: string, reason?: string) => void;
-//   approveForLab: (appointmentId: string) => void;
-//   getApprovedAppointments: () => Appointment[];
-//   availableTests: TestType[];
-//   getDiscountPercent: (category: Patient["category"]) => number;
-//   refreshTests: (options?: { category?: string; search?: string }) => Promise<void>;
-// }
-
-// const AppointmentContext = createContext<AppointmentContextType | undefined>(undefined);
-
-// const mockDoctors: Doctor[] = [
-//   { id: "2", name: "Dr. Sesan", specialty: "", profileImage: "", availability: true },
-//   { id: "3", name: "Dr. Abigail", specialty: "", profileImage: "", availability: true },
-//   { id: "7", name: "Dr. Kuti", specialty: "", profileImage: "", availability: true, nextAvailable: "2025-01-15" },
-//   { id: "8", name: "Dr. Oduyemi", specialty: "", profileImage: "", availability: true }
-// ];
-
-// export function AppointmentProvider({ children }: { children: ReactNode }) {
-//   // Load patients from localStorage or use defaults
-//   const [patients, setPatients] = useState<Patient[]>(() => {
-//     const saved = localStorage.getItem("patients");
-//     if (saved) return JSON.parse(saved);
-//     return [];
-//   });
-
-//   // Save patients whenever they change
-//   useEffect(() => {
-//     localStorage.setItem("patients", JSON.stringify(patients));
-//   }, [patients]);
-
-//   // Load appointments from localStorage or use defaults
-//   const [appointments, setAppointments] = useState<Appointment[]>(() => {
-//     const saved = localStorage.getItem("appointments");
-//     if (saved) return JSON.parse(saved);
-//     return [];
-//   });
-
-//   // Save appointments whenever they change
-//   useEffect(() => {
-//     localStorage.setItem("appointments", JSON.stringify(appointments));
-//   }, [appointments]);
-
-//   const [doctors] = useState<Doctor[]>(mockDoctors);
-
-//   const addPatient = (patient: Patient) => {
-//     setPatients(prev => [...prev, patient]);
-//   };
-
-//   const addAppointment = (appointment: Appointment) => {
-//     const newAppointment = {
-//       ...appointment,
-//       doctorApproved: appointment.doctorApproved || false,
-//       labAssigned: appointment.labAssigned || false,
-//       createdAt: new Date().toISOString(),
-//       updatedAt: new Date().toISOString()
-//     };
-//     setAppointments(prev => [...prev, newAppointment]);
-//   };
-
-//   const updateAppointment = (id: string, updates: Partial<Appointment>) => {
-//     setAppointments(prev =>
-//       prev.map(appointment =>
-//         appointment.id === id ? { ...appointment, ...updates, updatedAt: new Date().toISOString() } : appointment
-//       )
-//     );
-//   };
-
-//   const getPatientById = (id: string) => patients.find(patient => patient.id === id);
-
-//   const getAppointmentsByDoctor = (doctorId: string) =>
-//     appointments.filter(appointment => appointment.doctorId === doctorId);
-
-//   const getAppointmentsByDate = (date: string) =>
-//     appointments.filter(appointment => appointment.date === date);
-
-//   const rescheduleAppointment = (id: string, newDate: string, newTime: string, reason?: string) => {
-//     setAppointments(prev =>
-//       prev.map(appointment =>
-//         appointment.id === id
-//           ? {
-//               ...appointment,
-//               date: newDate,
-//               time: newTime,
-//               updatedAt: new Date().toISOString(),
-//               rescheduleHistory: [
-//                 ...(appointment.rescheduleHistory || []),
-//                 {
-//                   originalDate: appointment.date,
-//                   originalTime: appointment.time,
-//                   newDate,
-//                   newTime,
-//                   timestamp: new Date().toISOString(),
-//                   reason
-//                 }
-//               ]
-//             }
-//           : appointment
-//       )
-//     );
-//   };
-
-//   const approveForLab = (appointmentId: string) => {
-//     setAppointments(prev =>
-//       prev.map(appointment =>
-//         appointment.id === appointmentId
-//           ? { ...appointment, doctorApproved: true, labAssigned: true, updatedAt: new Date().toISOString() }
-//           : appointment
-//       )
-//     );
-//   };
-
-//   const getApprovedAppointments = () =>
-//     appointments.filter(appointment => appointment.doctorApproved && appointment.labAssigned);
-
-//   const getPatientsByFrontDesk = (frontDeskId: string) =>
-//     patients.filter(patient => patient.registeredById === frontDeskId);
-
-//   const getAppointmentsByFrontDesk = (frontDeskId: string) =>
-//     appointments.filter(appointment => {
-//       const patient = getPatientById(appointment.patientId);
-//       return patient?.registeredById === frontDeskId;
-//     });
-
-//   const [availableTests, setAvailableTests] = useState<TestType[]>([]);
-
-//   const refreshTests = async (options?: { category?: string; search?: string }) => {
-//     const token = localStorage.getItem("token");
-//     if (!token) return;
-//     try {
-//       const data = await fetchTests(token, options);
-//       setAvailableTests(data.tests);
-//     } catch (err) {
-//       console.error("Error fetching tests", err);
-//     }
-//   };
-
-//   const getDiscountPercent = (category: Patient["category"]) => {
-//     const discounts = {
-//       "walk-in": 0,
-//       referral: 10,
-//       corporate: 15,
-//       hmo: 30,
-//       hospital: 20,
-//       staff: 50
-//     };
-//     return discounts[category] || 0;
-//   };
-
-//   useEffect(() => {
-//     refreshTests();
-//   }, []);
-
-//   return (
-//     <AppointmentContext.Provider
-//       value={{
-//         patients,
-//         appointments,
-//         doctors,
-//         addPatient,
-//         addAppointment,
-//         updateAppointment,
-//         getPatientById,
-//         getAppointmentsByDoctor,
-//         getAppointmentsByDate,
-//         getPatientsByFrontDesk,
-//         getAppointmentsByFrontDesk,
-//         rescheduleAppointment,
-//         approveForLab,
-//         getApprovedAppointments,
-//         availableTests,
-//         getDiscountPercent,
-//         refreshTests
-//       }}
-//     >
-//       {children}
-//     </AppointmentContext.Provider>
-//   );
-// }
-
-// export function useAppointments() {
-//   const context = useContext(AppointmentContext);
-//   if (!context) throw new Error("useAppointments must be used within an AppointmentProvider");
-//   return context;
-// }
-
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import axios from "axios";
 import io from "socket.io-client";
 import { fetchTests } from "../services/testService";
 import doctorImg from "../assets/doctor.png";
-
 
 export interface Patient {
   id: string;
@@ -417,6 +123,10 @@ export interface AppointmentContextType {
     id: string,
     results: { data: string; notes: string }
   ) => void;
+  submitReport: (
+    appointmentId: string,
+    report: { file: File; notes: string; uploadedAt: string }
+  ) => Promise<void>;
   getPatientById: (id: string) => Patient | undefined;
   getAppointmentsByDoctor: (doctorId: string) => Appointment[];
   getAppointmentsByTechnician: (technicianId: string) => Appointment[];
@@ -461,9 +171,339 @@ const mockDoctors: Doctor[] = [
   },
 ];
 
+const dummyPatients: Patient[] = [
+  {
+    id: "p1",
+    name: "John Doe",
+    email: "john.doe@example.com",
+    phone: "+2341234567890",
+    dateOfBirth: "1985-05-15",
+    gender: "Male",
+    category: "walk-in",
+    insurance: { provider: "HealthCorp", policyNumber: "HC123456" },
+  },
+  {
+    id: "p2",
+    name: "Jane Smith",
+    email: "jane.smith@example.com",
+    phone: "+2340987654321",
+    dateOfBirth: "1990-03-22",
+    gender: "Female",
+    category: "referral",
+    insurance: { provider: "MediCare", policyNumber: "MC987654" },
+  },
+  {
+    id: "p3",
+    name: "Alice Johnson",
+    email: "alice.johnson@example.com",
+    phone: "+2345551234567",
+    dateOfBirth: "1978-11-10",
+    gender: "Female",
+    category: "hmo",
+    insurance: { provider: "HMOPlus", policyNumber: "HMO456789" },
+  },
+  {
+    id: "p4",
+    name: "Bob Williams",
+    email: "bob.williams@example.com",
+    phone: "+2347779876543",
+    dateOfBirth: "1982-07-30",
+    gender: "Male",
+    category: "corporate",
+    insurance: { provider: "CorpHealth", policyNumber: "CH123789" },
+  },
+  {
+    id: "p5",
+    name: "Emma Brown",
+    email: "emma.brown@example.com",
+    phone: "+2346664567890",
+    dateOfBirth: "1995-01-25",
+    gender: "Female",
+    category: "hospital",
+    insurance: { provider: "HospitalCare", policyNumber: "HC987123" },
+  },
+  {
+    id: "p6",
+    name: "Michael Davis",
+    email: "michael.davis@example.com",
+    phone: "+2344443219876",
+    dateOfBirth: "1988-09-12",
+    gender: "Male",
+    category: "walk-in",
+    insurance: { provider: "HealthCorp", policyNumber: "HC456123" },
+  },
+];
+
+const dummyTestAssignments: Appointment[] = [
+  {
+    id: "1",
+    patientId: "p1",
+    patientName: "John Doe",
+    doctorId: "7",
+    date: "2025-09-04",
+    time: "09:00",
+    tests: [
+      {
+        id: "t1",
+        name: "Complete Blood Count",
+        price: 50,
+        prices: {
+          "walk-in": 50,
+          referral: 45,
+          hmo: 40,
+          hospital: 42,
+          corporate: 48,
+        },
+        duration: 30,
+        department: "Hematology",
+      },
+      {
+        id: "t2",
+        name: "Lipid Panel",
+        price: 60,
+        prices: {
+          "walk-in": 60,
+          referral: 55,
+          hmo: 50,
+          hospital: 52,
+          corporate: 58,
+        },
+        duration: 45,
+        department: "Biochemistry",
+      },
+    ],
+    status: "in-progress",
+    priority: "high",
+    department: "Hematology",
+    sampleId: "SMP001",
+    sampleStatus: "received",
+    sampleCondition: "Good",
+    approvedAt: "2025-09-04T08:00:00Z",
+    startTime: "2025-09-04T09:00:00Z",
+    completionTime: undefined,
+    qcStatus: "pending",
+    technicianNotes:
+      "Sample processed on CBC Analyzer. Awaiting lipid panel results.",
+    doctorApproved: true,
+    labAssigned: true,
+    assignedLabTech: "tech1",
+    doctorComments: "Urgent processing required.",
+    createdAt: "2025-09-04T07:00:00Z",
+    updatedAt: "2025-09-04T09:00:00Z",
+  },
+  {
+    id: "2",
+    patientId: "p2",
+    patientName: "Jane Smith",
+    doctorId: "8",
+    date: "2025-09-03",
+    time: "11:00",
+    tests: [
+      {
+        id: "t3",
+        name: "Urinalysis",
+        price: 30,
+        prices: {
+          "walk-in": 30,
+          referral: 27,
+          hmo: 25,
+          hospital: 26,
+          corporate: 28,
+        },
+        duration: 20,
+        department: "Biochemistry",
+      },
+    ],
+    status: "lab-completed",
+    priority: "normal",
+    department: "Biochemistry",
+    sampleId: "SMP002",
+    sampleStatus: "received",
+    sampleCondition: "Slightly hemolyzed",
+    approvedAt: "2025-09-03T10:00:00Z",
+    startTime: "2025-09-03T11:00:00Z",
+    completionTime: "2025-09-03T14:00:00Z",
+    qcStatus: "passed",
+    technicianNotes: "Urinalysis completed. Results within normal range.",
+    doctorApproved: true,
+    labAssigned: true,
+    assignedLabTech: "tech1",
+    doctorComments: "Results look stable.",
+    createdAt: "2025-09-03T09:00:00Z",
+    updatedAt: "2025-09-03T14:00:00Z",
+  },
+  {
+    id: "3",
+    patientId: "p3",
+    patientName: "Alice Johnson",
+    doctorId: "7",
+    date: "2025-09-02",
+    time: "08:00",
+    tests: [
+      {
+        id: "t4",
+        name: "Blood Glucose",
+        price: 25,
+        prices: {
+          "walk-in": 25,
+          referral: 22,
+          hmo: 20,
+          hospital: 21,
+          corporate: 23,
+        },
+        duration: 15,
+        department: "Biochemistry",
+      },
+    ],
+    status: "completed",
+    priority: "low",
+    department: "Biochemistry",
+    sampleId: "SMP003",
+    sampleStatus: "received",
+    sampleCondition: "Good",
+    approvedAt: "2025-09-02T07:30:00Z",
+    startTime: "2025-09-02T08:00:00Z",
+    completionTime: "2025-09-02T09:30:00Z",
+    qcStatus: "passed",
+    technicianNotes: "Blood glucose test completed. Doctor approved.",
+    doctorApproved: true,
+    labAssigned: true,
+    assignedLabTech: "tech1",
+    doctorComments: "Approved for patient records.",
+    createdAt: "2025-09-02T07:00:00Z",
+    updatedAt: "2025-09-02T09:30:00Z",
+  },
+  {
+    id: "4",
+    patientId: "p4",
+    patientName: "Bob Williams",
+    doctorId: "8",
+    date: "2025-09-05",
+    time: "10:00",
+    tests: [
+      {
+        id: "t5",
+        name: "Thyroid Function Test",
+        price: 70,
+        prices: {
+          "walk-in": 70,
+          referral: 65,
+          hmo: 60,
+          hospital: 62,
+          corporate: 68,
+        },
+        duration: 60,
+        department: "Immunology",
+      },
+    ],
+    status: "in-progress",
+    priority: "normal",
+    department: "Immunology",
+    sampleId: "SMP004",
+    sampleStatus: "pending",
+    sampleCondition: "Not specified",
+    approvedAt: "2025-09-05T06:00:00Z",
+    startTime: undefined,
+    completionTime: undefined,
+    qcStatus: undefined,
+    technicianNotes: "Sample collection scheduled for today.",
+    doctorApproved: true,
+    labAssigned: true,
+    assignedLabTech: "tech1",
+    doctorComments: "Awaiting sample collection.",
+    createdAt: "2025-09-05T05:00:00Z",
+    updatedAt: "2025-09-05T06:00:00Z",
+  },
+  {
+    id: "5",
+    patientId: "p5",
+    patientName: "Emma Brown",
+    doctorId: "7",
+    date: "2025-09-04",
+    time: "13:00",
+    tests: [
+      {
+        id: "t6",
+        name: "Microbiology Culture",
+        price: 80,
+        prices: {
+          "walk-in": 80,
+          referral: 75,
+          hmo: 70,
+          hospital: 72,
+          corporate: 78,
+        },
+        duration: 120,
+        department: "Microbiology",
+      },
+    ],
+    status: "in-progress",
+    priority: "high",
+    department: "Microbiology",
+    sampleId: "SMP005",
+    sampleStatus: "received",
+    sampleCondition: "Good",
+    approvedAt: "2025-09-04T12:00:00Z",
+    startTime: "2025-09-04T13:00:00Z",
+    completionTime: undefined,
+    qcStatus: "pending",
+    technicianNotes:
+      "Culture in progress. Preliminary results expected tomorrow.",
+    doctorApproved: true,
+    labAssigned: true,
+    assignedLabTech: "tech1",
+    doctorComments: "Monitor culture closely.",
+    createdAt: "2025-09-04T11:00:00Z",
+    updatedAt: "2025-09-04T13:00:00Z",
+  },
+  {
+    id: "6",
+    patientId: "p6",
+    patientName: "Michael Davis",
+    doctorId: "8",
+    date: "2025-09-03",
+    time: "10:00",
+    tests: [
+      {
+        id: "t7",
+        name: "Electrolyte Panel",
+        price: 55,
+        prices: {
+          "walk-in": 55,
+          referral: 50,
+          hmo: 45,
+          hospital: 47,
+          corporate: 53,
+        },
+        duration: 40,
+        department: "Biochemistry",
+      },
+    ],
+    status: "lab-completed",
+    priority: "normal",
+    department: "Biochemistry",
+    sampleId: "SMP006",
+    sampleStatus: "received",
+    sampleCondition: "Good",
+    approvedAt: "2025-09-03T09:00:00Z",
+    startTime: "2025-09-03T10:00:00Z",
+    completionTime: "2025-09-03T12:00:00Z",
+    qcStatus: "failed",
+    technicianNotes:
+      "Electrolyte panel completed, but QC failed. Retesting required.",
+    doctorApproved: true,
+    labAssigned: true,
+    assignedLabTech: "tech1",
+    doctorComments: "Retest due to QC failure.",
+    createdAt: "2025-09-03T08:00:00Z",
+    updatedAt: "2025-09-03T12:00:00Z",
+  },
+];
+
 export function AppointmentProvider({ children }: { children: ReactNode }) {
-  const [patients, setPatients] = useState<Patient[]>([]);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [patients, setPatients] = useState<Patient[]>(dummyPatients);
+  const [appointments, setAppointments] =
+    useState<Appointment[]>(dummyTestAssignments);
   const [doctors] = useState<Doctor[]>(mockDoctors);
   const [availableTests, setAvailableTests] = useState<TestType[]>([]);
 
@@ -471,18 +511,21 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
     const fetchData = async () => {
       try {
         const [patientsRes, appointmentsRes] = await Promise.all([
-          axios.get("https://pms-backend-postgresql.onrender.com/api/patients"),
-          axios.get("https://pms-backend-postgresql.onrender.com/api/appointments"),
+          axios.get("http://localhost:8000/api/patients"),
+          axios.get("http://localhost:8000/api/appointments"),
         ]);
         setPatients(patientsRes.data);
         setAppointments(appointmentsRes.data);
       } catch (err) {
         console.error("Error fetching data", err);
+        // Fallback to dummy data if API fails
+        setPatients(dummyPatients);
+        setAppointments(dummyTestAssignments);
       }
     };
     fetchData();
 
-    const socket = io("https://pms-backend-postgresql.onrender.com");
+    const socket = io("http://localhost:8000");
     socket.on("appointments-changed", () => {
       fetchData();
     });
@@ -494,8 +537,11 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
   const addPatient = async (patient: Patient) => {
     try {
       const res = await axios.post(
-        "https://pms-backend-postgresql.onrender.com/api/patients",
-        patient
+        "http://localhost:8000/api/patients",
+        patient,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
       );
       setPatients((prev) => [...prev, res.data]);
     } catch (err) {
@@ -513,8 +559,11 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
         updatedAt: new Date().toISOString(),
       };
       const res = await axios.post(
-        "https://pms-backend-postgresql.onrender.com/api/appointments",
-        newAppointment
+        "http://localhost:8000/api/appointments",
+        newAppointment,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
       );
       setAppointments((prev) => [...prev, res.data]);
     } catch (err) {
@@ -527,7 +576,9 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
     updates: Partial<Appointment>
   ) => {
     try {
-      await axios.put(`https://pms-backend-postgresql.onrender.com/api/appointments/${id}`, updates);
+      await axios.put(`http://localhost:8000/api/appointments/${id}`, updates, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
       setAppointments((prev) =>
         prev.map((appointment) =>
           appointment.id === id
@@ -560,8 +611,11 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
         completionTime: new Date().toISOString(),
       };
       await axios.put(
-        `https://pms-backend-postgresql.onrender.com/api/appointments/${id}/results`,
-        updates
+        `http://localhost:8000/api/appointments/${id}/results`,
+        updates,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
       );
       setAppointments((prev) =>
         prev.map((appointment) =>
@@ -577,6 +631,51 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
       );
     } catch (err) {
       console.error("Error submitting test results", err);
+    }
+  };
+
+  const submitReport = async (
+    testRequestId: string,
+    report: {
+      file: File;
+      interpretation: string;
+      comments: string;
+      qualityControl: string;
+    }
+  ) => {
+    try {
+      const formData = new FormData();
+      formData.append("resultFile", report.file); // 🔑 must match upload.single('resultFile')
+      formData.append("testRequestId", "1234-56789");
+      formData.append("interpretation", report.interpretation);
+      formData.append("comments", report.comments);
+      formData.append("qualityControl", report.qualityControl);
+      console.log(localStorage.getItem("token"));
+      await axios.post(
+        `http://localhost:8000/api/lab-tech/submit-result/upload`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setAppointments((prev) =>
+        prev.map((appt) =>
+          appt.id === testRequestId
+            ? {
+                ...appt,
+                technicianNotes: report.comments,
+                updatedAt: new Date().toISOString(),
+              }
+            : appt
+        )
+      );
+    } catch (err) {
+      console.error("Error submitting report", err);
+      throw err;
     }
   };
 
@@ -643,8 +742,11 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
     };
     try {
       await axios.post(
-        `https://pms-backend-postgresql.onrender.com/api/appointments/${appointmentId}/assign`,
-        { labTechnicianId }
+        `http://localhost:8000/api/appointments/${appointmentId}/assign`,
+        { labTechnicianId },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
       );
       setAppointments((prev) =>
         prev.map((appointment) =>
@@ -691,6 +793,107 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
       setAvailableTests(tests);
     } catch (err) {
       console.error("Error fetching tests", err);
+      // Fallback to mock tests
+      setAvailableTests([
+        {
+          id: "t1",
+          name: "Complete Blood Count",
+          price: 50,
+          prices: {
+            "walk-in": 50,
+            referral: 45,
+            hmo: 40,
+            hospital: 42,
+            corporate: 48,
+          },
+          duration: 30,
+          department: "Hematology",
+        },
+        {
+          id: "t2",
+          name: "Lipid Panel",
+          price: 60,
+          prices: {
+            "walk-in": 60,
+            referral: 55,
+            hmo: 50,
+            hospital: 52,
+            corporate: 58,
+          },
+          duration: 45,
+          department: "Biochemistry",
+        },
+        {
+          id: "t3",
+          name: "Urinalysis",
+          price: 30,
+          prices: {
+            "walk-in": 30,
+            referral: 27,
+            hmo: 25,
+            hospital: 26,
+            corporate: 28,
+          },
+          duration: 20,
+          department: "Biochemistry",
+        },
+        {
+          id: "t4",
+          name: "Blood Glucose",
+          price: 25,
+          prices: {
+            "walk-in": 25,
+            referral: 22,
+            hmo: 20,
+            hospital: 21,
+            corporate: 23,
+          },
+          duration: 15,
+          department: "Biochemistry",
+        },
+        {
+          id: "t5",
+          name: "Thyroid Function Test",
+          price: 70,
+          prices: {
+            "walk-in": 70,
+            referral: 65,
+            hmo: 60,
+            hospital: 62,
+            corporate: 68,
+          },
+          duration: 60,
+          department: "Immunology",
+        },
+        {
+          id: "t6",
+          name: "Microbiology Culture",
+          price: 80,
+          prices: {
+            "walk-in": 80,
+            referral: 75,
+            hmo: 70,
+            hospital: 72,
+            corporate: 78,
+          },
+          duration: 120,
+          department: "Microbiology",
+        },
+        {
+          id: "t7",
+          name: "Electrolyte Panel",
+          price: 55,
+          prices: {
+            "walk-in": 55,
+            referral: 50,
+            hmo: 45,
+            hospital: 47,
+            corporate: 53,
+          },
+          duration: 40,
+          department: "Biochemistry",
+        },
+      ]);
     }
   };
 
@@ -708,6 +911,7 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
         addAppointment,
         updateAppointment,
         submitTestResults,
+        submitReport,
         getPatientById,
         getAppointmentsByDoctor,
         getAppointmentsByTechnician,

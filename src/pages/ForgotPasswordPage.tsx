@@ -29,11 +29,11 @@ function ForgotPasswordPage() {
     let identifier = email;
 
     // if(email && newPassword){
-    //   axios.post('https://pms-backend-postgresql.onrender.com/api/auth/reset-password', { identifier, newPassword })
+    //   axios.post('https:localhost:8000/api/auth/reset-password', { identifier, newPassword })
     // }
 
     if (email && newPassword) {
-      axios.post("https://pms-backend-postgresql.onrender.com/api/auth/reset-password", {
+      axios.post("https:localhost:8000/api/auth/reset-password", {
         identifier,
         newPassword,
       });

@@ -1,82 +1,163 @@
-import React, { useState } from 'react';
-import Layout from '../components/Layout';
-//mport { useAuth } from '../contexts/AuthContext';
+import React, { useState } from "react";
+import Layout from "../components/Layout";
+import { useAuth } from "../contexts/AuthContext";
+import { useAppointments } from "../contexts/AppointmentContext";
+import { useNotifications } from "../contexts/NotificationContext";
+import {
+  Clock,
+  Users,
+  TestTube,
+  FileCheck,
+  Search,
+  Filter,
+  User,
+  Calendar,
+  RefreshCw,
+  CheckCircle,
+  X,
+  Eye,
+  Send,
+  AlertCircle,
+  FileText,
+  FileSignature as Signature,
+  XCircle,
+} from "lucide-react";
 
-import { useAppointments } from '../contexts/AppointmentContext';
-// import { useNotifications } from '../contexts/NotificationContext';
-import { Clock, Users, TestTube, FileCheck, Search, Filter, User, Calendar, RefreshCw, CheckCircle, X, Eye, Send, AlertCircle, FileText, FileSignature as Signature } from 'lucide-react';
+interface Appointment {
+  id: string;
+  patientId: string;
+  doctorId: string;
+  date: string;
+  time: string;
+  tests: {
+    id: string;
+    name: string;
+    price: number;
+    prices: { [key: string]: number };
+    duration: number;
+    department: string;
+  }[];
+  status:
+    | "scheduled"
+    | "in-progress"
+    | "lab-completed"
+    | "completed"
+    | "cancelled"
+    | "rejected";
+  doctorApproved: boolean;
+  labAssigned: boolean;
+  assignedLabTech?: string;
+  approvedAt?: string;
+  doctorSignature?: string;
+  doctorComments?: string;
+  finalizedAt?: string;
+  remarks?: string;
+  results?: string[];
+  rescheduleHistory?: {
+    originalDate: string;
+    originalTime: string;
+    newDate: string;
+    newTime: string;
+    timestamp: string;
+    reason?: string;
+  }[];
+  createdAt?: string;
+  updatedAt?: string;
+  sampleId?: string;
+  sampleStatus?: "received" | "pending" | "rejected";
+  sampleCondition?: string;
+  technicianNotes?: string;
+  qcStatus?: "passed" | "failed" | "pending";
+  startTime?: string;
+  completionTime?: string;
+  priority?: "low" | "normal" | "high";
+  department?: string;
+  report?: { file: File; notes: string; uploadedAt: string };
+}
 
 function DoctorDashboard() {
- // const { user } = useAuth();
-  const { appointments, patients, updateAppointment, rescheduleAppointment } = useAppointments();
- // const { addNotification } = useNotifications();
-  
-  console.log('Doctor Dashboard - User:',);
-  console.log('Doctor Dashboard - All Appointments:', appointments);
-  console.log('Doctor Dashboard - All Patients:', patients);
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const { user } = useAuth();
+  const { appointments, patients, updateAppointment, rescheduleAppointment } =
+    useAppointments();
+  const { addNotification } = useNotifications();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showResultsModal, setShowResultsModal] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
-
+  const [selectedAppointment, setSelectedAppointment] =
+    useState<Appointment | null>(null);
+  console.log(appointments);
   // Get today's date
-  const today = new Date().toISOString().split('T')[0];
-  console.log('Today\'s date:', today);
+  const today = new Date().toISOString().split("T")[0];
 
   // Filter appointments for the logged-in doctor
-  const doctorAppointments = appointments.filter(appointment => appointment.doctorId === "8765");
-  console.log('Doctor Appointments:', doctorAppointments);
-  
+  const doctorAppointments = appointments.filter(
+    (appointment) => appointment.doctorId === user.id
+  );
+
   // Today's appointments
-  const todayAppointments = doctorAppointments.filter(appointment => appointment.date === today);
-  console.log('Today\'s Appointments:', todayAppointments);
-  
+  const todayAppointments = doctorAppointments.filter(
+    (appointment) => appointment.date === today
+  );
+
   // Filter appointments based on search and status
-  const filteredAppointments = doctorAppointments.filter(appointment => {
-    const patient = patients.find(p => p.id === appointment.patientId);
-    const matchesSearch = !searchTerm || 
+  const filteredAppointments = doctorAppointments.filter((appointment) => {
+    const patient = patients.find((p) => p.id === appointment.patientId);
+    const matchesSearch =
+      !searchTerm ||
       patient?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       patient?.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || appointment.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || appointment.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   // Calculate statistics
-  const pendingRequests = doctorAppointments.filter(apt => apt.status === 'scheduled' && !apt.doctorApproved).length;
-  const assignedTests = doctorAppointments.filter(apt => apt.status === 'in-progress').length;
-  const awaitingResults = doctorAppointments.filter(apt => apt.status === 'lab-completed').length;
-  const forApproval = doctorAppointments.filter(apt => apt.status === 'scheduled' && !apt.doctorApproved).length;
+  const pendingRequests = doctorAppointments.filter(
+    (apt) => apt.status === "scheduled" && !apt.doctorApproved
+  ).length;
+  const assignedTests = doctorAppointments.filter(
+    (apt) => apt.status === "in-progress"
+  ).length;
+  const awaitingResults = doctorAppointments.filter(
+    (apt) => apt.status === "lab-completed" && apt.report
+  ).length;
+  const forApproval = doctorAppointments.filter(
+    (apt) => apt.status === "lab-completed" && apt.report
+  ).length;
 
-  const handleReschedule = (appointment: any) => {
+  const handleReschedule = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setShowRescheduleModal(true);
   };
 
-  const handleApprove = (appointment: any) => {
+  const handleApprove = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setShowApprovalModal(true);
   };
 
-  const handleViewResults = (appointment: any) => {
+  const handleViewResults = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setShowResultsModal(true);
   };
 
-  const submitReschedule = (newDate: string, newTime: string, reason: string) => {
+  const submitReschedule = (
+    newDate: string,
+    newTime: string,
+    reason: string
+  ) => {
     if (selectedAppointment) {
-   //   const patient = patients.find(p => p.id === selectedAppointment.patientId);
-      
+      const patient = patients.find(
+        (p) => p.id === selectedAppointment.patientId
+      );
       rescheduleAppointment(selectedAppointment.id, newDate, newTime, reason);
-      
-      // addNotification({
-      //   title: 'Appointment Rescheduled',
-      //   message: `Appointment for ${patient?.name} has been rescheduled from ${selectedAppointment.date} ${selectedAppointment.time} to ${newDate} at ${newTime}`,
-      //   type: 'info',
-      // });
-      
+      addNotification({
+        title: "Appointment Rescheduled",
+        message: `Appointment for ${patient?.name} has been rescheduled from ${selectedAppointment.date} ${selectedAppointment.time} to ${newDate} at ${newTime}`,
+        type: "info",
+      });
       setShowRescheduleModal(false);
       setSelectedAppointment(null);
     }
@@ -84,22 +165,23 @@ function DoctorDashboard() {
 
   const approveAndForwardToLab = (labTechnicianId?: string) => {
     if (selectedAppointment) {
-      //const patient = patients.find(p => p.id === selectedAppointment.patientId);
-      
+      const patient = patients.find(
+        (p) => p.id === selectedAppointment.patientId
+      );
       updateAppointment(selectedAppointment.id, {
         doctorApproved: true,
         labAssigned: true,
-        status: 'in-progress',
+        status: "in-progress",
         assignedLabTech: labTechnicianId,
-        approvedAt: new Date().toISOString()
+        approvedAt: new Date().toISOString(),
       });
-      
-      // addNotification({
-      //   title: 'Tests Approved & Forwarded to Lab',
-      //   message: `Tests for ${patient?.name} (${selectedAppointment.tests.map((t: any) => t.name).join(', ')}) have been approved and forwarded to lab technicians`,
-      //   type: 'success',
-      // });
-      
+      addNotification({
+        title: "Tests Approved & Forwarded to Lab",
+        message: `Tests for ${patient?.name} (${selectedAppointment.tests
+          .map((t: any) => t.name)
+          .join(", ")}) have been approved and forwarded to lab technicians`,
+        type: "success",
+      });
       setShowApprovalModal(false);
       setSelectedAppointment(null);
     }
@@ -107,21 +189,40 @@ function DoctorDashboard() {
 
   const approveResults = (signature: string, comments: string) => {
     if (selectedAppointment) {
-     // const patient = patients.find(p => p.id === selectedAppointment.patientId);
-      
+      const patient = patients.find(
+        (p) => p.id === selectedAppointment.patientId
+      );
       updateAppointment(selectedAppointment.id, {
-        status: 'completed',
+        status: "completed",
         doctorSignature: signature,
         doctorComments: comments,
-        finalizedAt: new Date().toISOString()
+        finalizedAt: new Date().toISOString(),
       });
-      
-      // addNotification({
-      //   title: 'Results Approved & Sent to Patient',
-      //   message: `Test results for ${patient?.name} have been approved and securely sent to patient portal with 2FA protection`,
-      //   type: 'success',
-      // });
-      
+      addNotification({
+        title: "Results Approved & Sent to Patient",
+        message: `Test results for ${patient?.name} have been approved and securely sent to patient portal with 2FA protection`,
+        type: "success",
+      });
+      setShowResultsModal(false);
+      setSelectedAppointment(null);
+    }
+  };
+
+  const rejectResults = (comments: string) => {
+    if (selectedAppointment) {
+      const patient = patients.find(
+        (p) => p.id === selectedAppointment.patientId
+      );
+      updateAppointment(selectedAppointment.id, {
+        status: "rejected",
+        doctorComments: comments,
+        finalizedAt: new Date().toISOString(),
+      });
+      addNotification({
+        title: "Results Rejected",
+        message: `Test results for ${patient?.name} have been rejected with comments: ${comments}`,
+        type: "error",
+      });
       setShowResultsModal(false);
       setSelectedAppointment(null);
     }
@@ -129,89 +230,108 @@ function DoctorDashboard() {
 
   return (
     <Layout title="">
-      <div className="space-y-6">
+      <div className="space-y-6 px-2 sm:px-4">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Doctor Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage patient test requests and review results</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#3065B5]">
+            Doctor Dashboard
+          </h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">
+            Manage patient test requests and review results
+          </p>
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Pending Requests</p>
-                <p className="text-3xl font-bold text-gray-900">{pendingRequests}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  {pendingRequests}
+                </p>
               </div>
-              <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
-                <Clock size={24} className="text-gray-300" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+                <Clock size={20} className="text-gray-300" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Assigned Tests</p>
-                <p className="text-3xl font-bold text-gray-900">{assignedTests}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  {assignedTests}
+                </p>
               </div>
-              <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
-                <Users size={24} className="text-gray-300" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+                <Users size={20} className="text-gray-300" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Awaiting Results</p>
-                <p className="text-3xl font-bold text-gray-900">{awaitingResults}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  {awaitingResults}
+                </p>
               </div>
-              <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
-                <TestTube size={24} className="text-gray-300" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+                <TestTube size={20} className="text-gray-300" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">For Approval</p>
-                <p className="text-3xl font-bold text-gray-900">{forApproval}</p>
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+                  {forApproval}
+                </p>
               </div>
-              <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center">
-                <FileCheck size={24} className="text-gray-300" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gray-700 rounded-lg flex items-center justify-center">
+                <FileCheck size={20} className="text-gray-300" />
               </div>
             </div>
           </div>
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <div className="relative flex-1">
-              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              />
               <input
                 type="text"
                 placeholder="Search patients by name or email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div className="relative">
-              <Filter size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Filter
+                size={16}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              />
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="pl-10 pr-8 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white min-w-[140px]"
+                className="pl-8 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white min-w-[120px]"
               >
                 <option value="all">All Status</option>
                 <option value="scheduled">Pending</option>
                 <option value="in-progress">In Progress</option>
                 <option value="lab-completed">Lab Completed</option>
                 <option value="completed">Completed</option>
+                <option value="rejected">Rejected</option>
               </select>
             </div>
           </div>
@@ -219,21 +339,25 @@ function DoctorDashboard() {
 
         {/* Today's Appointments Section */}
         <div className="bg-white rounded-lg shadow-sm">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-3 sm:p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-              <Calendar size={20} className="mr-2" />
-              Today's Appointments ({todayAppointments.length}) - {today}
+              <Calendar size={18} className="mr-2" />
+              Today's Appointments ({todayAppointments.length}) -{" "}
+              {new Date().toLocaleDateString("en-NG", {
+                timeZone: "Africa/Lagos",
+              })}
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Showing appointments for Dr. Trerty ID: 8765 
+              Showing appointments for Dr. {user.name || "Trerty"} ID: {user.id}
             </p>
           </div>
 
           <div className="divide-y divide-gray-200">
             {todayAppointments.length > 0 ? (
               todayAppointments.map((appointment) => {
-                const patient = patients.find(p => p.id === appointment.patientId);
-                console.log('Rendering appointment:', appointment.id, 'Patient:', patient);
+                const patient = patients.find(
+                  (p) => p.id === appointment.patientId
+                );
                 return (
                   <AppointmentCard
                     key={appointment.id}
@@ -257,7 +381,7 @@ function DoctorDashboard() {
 
         {/* All Patient Test Requests */}
         <div className="bg-white rounded-lg shadow-sm">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-3 sm:p-6 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">
               All Patient Test Requests ({filteredAppointments.length})
             </h2>
@@ -269,7 +393,9 @@ function DoctorDashboard() {
           <div className="divide-y divide-gray-200">
             {filteredAppointments.length > 0 ? (
               filteredAppointments.map((appointment) => {
-                const patient = patients.find(p => p.id === appointment.patientId);
+                const patient = patients.find(
+                  (p) => p.id === appointment.patientId
+                );
                 return (
                   <AppointmentCard
                     key={appointment.id}
@@ -295,7 +421,9 @@ function DoctorDashboard() {
         {showRescheduleModal && selectedAppointment && (
           <RescheduleModal
             appointment={selectedAppointment}
-            patient={patients.find(p => p.id === selectedAppointment.patientId)}
+            patient={patients.find(
+              (p) => p.id === selectedAppointment.patientId
+            )}
             onClose={() => {
               setShowRescheduleModal(false);
               setSelectedAppointment(null);
@@ -307,7 +435,9 @@ function DoctorDashboard() {
         {showApprovalModal && selectedAppointment && (
           <ApprovalModal
             appointment={selectedAppointment}
-            patient={patients.find(p => p.id === selectedAppointment.patientId)}
+            patient={patients.find(
+              (p) => p.id === selectedAppointment.patientId
+            )}
             onClose={() => {
               setShowApprovalModal(false);
               setSelectedAppointment(null);
@@ -319,12 +449,15 @@ function DoctorDashboard() {
         {showResultsModal && selectedAppointment && (
           <ResultsReviewModal
             appointment={selectedAppointment}
-            patient={patients.find(p => p.id === selectedAppointment.patientId)}
+            patient={patients.find(
+              (p) => p.id === selectedAppointment.patientId
+            )}
             onClose={() => {
               setShowResultsModal(false);
               setSelectedAppointment(null);
             }}
             onApprove={approveResults}
+            onReject={rejectResults}
           />
         )}
       </div>
@@ -333,7 +466,7 @@ function DoctorDashboard() {
 }
 
 interface AppointmentCardProps {
-  appointment: any;
+  appointment: Appointment;
   patient: any;
   onReschedule: () => void;
   onApprove: () => void;
@@ -341,109 +474,182 @@ interface AppointmentCardProps {
   isToday: boolean;
 }
 
-function AppointmentCard({ appointment, patient, onReschedule, onApprove, onViewResults, isToday }: AppointmentCardProps) {
+function AppointmentCard({
+  appointment,
+  patient,
+  onReschedule,
+  onApprove,
+  onViewResults,
+  isToday,
+}: AppointmentCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'bg-yellow-100 text-yellow-800';
-      case 'in-progress': return 'bg-blue-100 text-blue-800';
-      case 'lab-completed': return 'bg-purple-100 text-purple-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "scheduled":
+        return "bg-yellow-100 text-yellow-800";
+      case "in-progress":
+        return "bg-blue-100 text-blue-800";
+      case "lab-completed":
+        return "bg-purple-100 text-purple-800";
+      case "completed":
+        return "bg-green-100 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'scheduled': return 'Pending Approval';
-      case 'in-progress': return 'Lab Processing';
-      case 'lab-completed': return 'Results Ready';
-      case 'completed': return 'Completed';
-      default: return status;
+      case "scheduled":
+        return "Pending Approval";
+      case "in-progress":
+        return "Lab Processing";
+      case "lab-completed":
+        return "Results Ready";
+      case "completed":
+        return "Completed";
+      case "rejected":
+        return "Rejected";
+      default:
+        return status;
     }
   };
 
   return (
-    <div className={`p-6 hover:bg-gray-50 transition-colors ${isToday ? 'bg-blue-50' : ''}`}>
+    <div
+      className={`p-3 sm:p-6 hover:bg-gray-50 transition-colors ${
+        isToday ? "bg-blue-50" : ""
+      }`}
+    >
       <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-4">
-          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-            <User size={20} className="text-blue-600" />
+        <div className="flex items-start space-x-3 sm:space-x-4">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <User size={16} className="text-blue-600" />
           </div>
           <div className="flex-1">
-            <div className="flex items-center space-x-3 mb-2">
-              <h3 className="text-lg font-medium text-gray-900">{patient?.name || 'Unknown Patient'}</h3>
-              <span className="text-sm text-gray-500">{patient?.email}</span>
-              {isToday && <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full">TODAY</span>}
-            </div>
-            
-            <div className="flex items-center space-x-4 mb-3">
-              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
-                {getStatusText(appointment.status)}
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-2">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900">
+                {patient?.name || "Unknown Patient"}
+              </h3>
+              <span className="text-xs sm:text-sm text-gray-500">
+                {patient?.email}
               </span>
-              <span className="text-sm text-gray-600">Category: {patient?.category?.replace('-', ' ')}</span>
-              <span className="text-sm text-gray-600">Date: {appointment.date}</span>
-              <span className="text-sm text-gray-600">Time: {appointment.time}</span>
+              {isToday && (
+                <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded-full">
+                  TODAY
+                </span>
+              )}
             </div>
 
-            <div className="mb-3">
-              <p className="text-sm text-gray-600 mb-1">Requested Tests:</p>
+            <div className="flex flex-wrap items-center space-x-2 sm:space-x-4 mb-2 sm:mb-3">
+              <span
+                className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
+                  appointment.status
+                )}`}
+              >
+                {getStatusText(appointment.status)}
+              </span>
+              <span className="text-xs sm:text-sm text-gray-600">
+                Category:{" "}
+                {patient?.category?.replace("-", " ") || "Not specified"}
+              </span>
+              <span className="text-xs sm:text-sm text-gray-600">
+                Date: {appointment.date}
+              </span>
+              <span className="text-xs sm:text-sm text-gray-600">
+                Time: {appointment.time}
+              </span>
+            </div>
+
+            <div className="mb-2 sm:mb-3">
+              <p className="text-xs sm:text-sm text-gray-600 mb-1">
+                Requested Tests:
+              </p>
               <div className="flex flex-wrap gap-2">
                 {appointment.tests.map((test: any, index: number) => (
-                  <span key={index} className="inline-flex px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded">
+                  <span
+                    key={index}
+                    className="inline-flex px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded"
+                  >
                     {test.name} - ${test.price}
                   </span>
                 ))}
               </div>
             </div>
 
-            {appointment.rescheduleHistory && appointment.rescheduleHistory.length > 0 && (
-              <div className="text-xs text-orange-600 mb-2">
-                <span className="font-medium">Rescheduled:</span> {appointment.rescheduleHistory[appointment.rescheduleHistory.length - 1].reason}
-              </div>
-            )}
+            {appointment.rescheduleHistory &&
+              appointment.rescheduleHistory.length > 0 && (
+                <div className="text-xs text-orange-600 mb-2">
+                  <span className="font-medium">Rescheduled:</span>{" "}
+                  {
+                    appointment.rescheduleHistory[
+                      appointment.rescheduleHistory.length - 1
+                    ].reason
+                  }
+                </div>
+              )}
 
             {appointment.doctorApproved && (
               <div className="text-xs text-green-600 mb-2">
-                <span className="font-medium">✅ Approved for Lab Processing</span>
+                <span className="font-medium">
+                  ✅ Approved for Lab Processing
+                </span>
                 {appointment.approvedAt && (
-                  <span className="ml-2">on {new Date(appointment.approvedAt).toLocaleString()}</span>
+                  <span className="ml-2">
+                    on{" "}
+                    {new Date(appointment.approvedAt).toLocaleString("en-NG", {
+                      timeZone: "Africa/Lagos",
+                    })}
+                  </span>
                 )}
               </div>
             )}
+
+            {appointment.status === "rejected" &&
+              appointment.doctorComments && (
+                <div className="text-xs text-red-600 mb-2">
+                  <span className="font-medium">Rejected:</span>{" "}
+                  {appointment.doctorComments}
+                </div>
+              )}
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <button
             onClick={onReschedule}
-            className="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center space-x-1"
+            className="px-2 sm:px-3 py-1 sm:py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center space-x-1 text-xs sm:text-sm"
             title="Reschedule Appointment"
           >
             <RefreshCw size={16} />
-            <span className="text-sm">Reschedule</span>
+            <span>Reschedule</span>
           </button>
-          
+
           {!appointment.doctorApproved ? (
             <button
               onClick={onApprove}
-              className="px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1"
+              className="px-2 sm:px-3 py-1 sm:py-2 bg-green-600 text-white text-xs sm:text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1"
               title="Approve & Forward to Lab"
             >
               <CheckCircle size={16} />
               <span>Approve & Forward</span>
             </button>
-          ) : appointment.status === 'lab-completed' ? (
+          ) : appointment.status === "lab-completed" && appointment.report ? (
             <button
               onClick={onViewResults}
-              className="px-3 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-1"
+              className="px-2 sm:px-3 py-1 sm:py-2 bg-purple-600 text-white text-xs sm:text-sm rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-1"
               title="Review & Approve Results"
             >
               <Eye size={16} />
               <span>Review Results</span>
             </button>
           ) : (
-            <div className="flex items-center text-green-600" title="Approved for Lab">
-              <CheckCircle size={20} />
+            <div
+              className="flex items-center text-green-600"
+              title="Approved for Lab"
+            >
+              <CheckCircle size={16} />
               <span className="text-xs ml-1">Approved</span>
             </div>
           )}
@@ -454,20 +660,35 @@ function AppointmentCard({ appointment, patient, onReschedule, onApprove, onView
 }
 
 interface RescheduleModalProps {
-  appointment: any;
+  appointment: Appointment;
   patient: any;
   onClose: () => void;
   onSubmit: (newDate: string, newTime: string, reason: string) => void;
 }
 
-function RescheduleModal({ appointment, patient, onClose, onSubmit }: RescheduleModalProps) {
+function RescheduleModal({
+  appointment,
+  patient,
+  onClose,
+  onSubmit,
+}: RescheduleModalProps) {
   const [newDate, setNewDate] = useState(appointment.date);
   const [newTime, setNewTime] = useState(appointment.time);
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState("");
 
   const availableTimes = [
-    '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-    '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
+    "09:00",
+    "09:30",
+    "10:00",
+    "10:30",
+    "11:00",
+    "11:30",
+    "14:00",
+    "14:30",
+    "15:00",
+    "15:30",
+    "16:00",
+    "16:30",
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -476,19 +697,24 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-md w-full mx-4">
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-4 sm:p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Reschedule Appointment</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Reschedule Appointment
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
               <X size={20} />
             </button>
           </div>
           <p className="text-sm text-gray-600 mt-1">Patient: {patient?.name}</p>
         </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Current Date & Time
@@ -506,8 +732,8 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
               type="date"
               value={newDate}
               onChange={(e) => setNewDate(e.target.value)}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              min={new Date().toISOString().split("T")[0]}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               required
             />
           </div>
@@ -519,11 +745,13 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
             <select
               value={newTime}
               onChange={(e) => setNewTime(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               required
             >
-              {availableTimes.map(time => (
-                <option key={time} value={time}>{time}</option>
+              {availableTimes.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
               ))}
             </select>
           </div>
@@ -536,7 +764,7 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Enter reason for rescheduling..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               rows={3}
             />
           </div>
@@ -545,13 +773,13 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              className="px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
             >
               Reschedule
             </button>
@@ -563,20 +791,25 @@ function RescheduleModal({ appointment, patient, onClose, onSubmit }: Reschedule
 }
 
 interface ApprovalModalProps {
-  appointment: any;
+  appointment: Appointment;
   patient: any;
   onClose: () => void;
   onApprove: (labTechnicianId?: string) => void;
 }
 
-function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalModalProps) {
-  const [selectedLabTech, setSelectedLabTech] = useState('');
-  const [notes, setNotes] = useState('');
+function ApprovalModal({
+  appointment,
+  patient,
+  onClose,
+  onApprove,
+}: ApprovalModalProps) {
+  const [selectedLabTech, setSelectedLabTech] = useState("");
+  const [notes, setNotes] = useState("");
 
   const labTechnicians = [
-    { id: '4', name: 'James Brown', specialty: 'General Lab' },
-    { id: '9', name: 'Lisa Johnson', specialty: 'Blood Analysis' },
-    { id: '10', name: 'Mark Wilson', specialty: 'Radiology' },
+    { id: "tech1", name: "James Brown", specialty: "General Lab" },
+    { id: "tech2", name: "Lisa Johnson", specialty: "Blood Analysis" },
+    { id: "tech3", name: "Mark Wilson", specialty: "Radiology" },
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -584,29 +817,42 @@ function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalMod
     onApprove(selectedLabTech || undefined);
   };
 
-  const totalPrice = appointment.tests.reduce((sum: number, test: any) => sum + test.price, 0);
+  const totalPrice = appointment.tests.reduce(
+    (sum: number, test: any) => sum + test.price,
+    0
+  );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-lg w-full mx-4">
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-4 sm:p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Approve & Forward to Lab</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Approve & Forward to Lab
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
               <X size={20} />
             </button>
           </div>
           <p className="text-sm text-gray-600 mt-1">Patient: {patient?.name}</p>
         </div>
-        
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">Test Details</h4>
             <div className="space-y-2">
               {appointment.tests.map((test: any, index: number) => (
-                <div key={index} className="flex justify-between items-center text-sm">
+                <div
+                  key={index}
+                  className="flex justify-between items-center text-sm"
+                >
                   <span className="text-blue-800">{test.name}</span>
-                  <span className="font-medium text-blue-900">${test.price}</span>
+                  <span className="font-medium text-blue-900">
+                    ${test.price}
+                  </span>
                 </div>
               ))}
               <div className="border-t border-blue-200 pt-2 flex justify-between items-center font-semibold">
@@ -623,11 +869,13 @@ function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalMod
             <select
               value={selectedLabTech}
               onChange={(e) => setSelectedLabTech(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             >
               <option value="">Auto-assign to available technician</option>
-              {labTechnicians.map(tech => (
-                <option key={tech.id} value={tech.id}>{tech.name} - {tech.specialty}</option>
+              {labTechnicians.map((tech) => (
+                <option key={tech.id} value={tech.id}>
+                  {tech.name} - {tech.specialty}
+                </option>
               ))}
             </select>
           </div>
@@ -640,7 +888,7 @@ function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalMod
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Any special instructions for the lab..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               rows={3}
             />
           </div>
@@ -649,7 +897,8 @@ function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalMod
             <div className="flex items-center space-x-2 text-green-800">
               <AlertCircle size={16} />
               <span className="text-sm font-medium">
-                By approving, you confirm the test requests are accurate and ready for lab processing.
+                By approving, you confirm the test requests are accurate and
+                ready for lab processing.
               </span>
             </div>
           </div>
@@ -658,13 +907,13 @@ function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalMod
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              className="px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
+              className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2 text-sm"
             >
               <Send size={16} />
               <span>Approve & Forward</span>
@@ -677,35 +926,59 @@ function ApprovalModal({ appointment, patient, onClose, onApprove }: ApprovalMod
 }
 
 interface ResultsReviewModalProps {
-  appointment: any;
+  appointment: Appointment;
   patient: any;
   onClose: () => void;
   onApprove: (signature: string, comments: string) => void;
+  onReject: (comments: string) => void;
 }
 
-function ResultsReviewModal({ appointment, patient, onClose, onApprove }: ResultsReviewModalProps) {
-  const [signature, setSignature] = useState('');
-  const [comments, setComments] = useState('');
+function ResultsReviewModal({
+  appointment,
+  patient,
+  onClose,
+  onApprove,
+  onReject,
+}: ResultsReviewModalProps) {
+  const [signature, setSignature] = useState("");
+  const [comments, setComments] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
+  const [showRejectForm, setShowRejectForm] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleApproveSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onApprove(signature, comments);
   };
 
+  const handleRejectSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onReject(rejectReason);
+  };
+
+  const toggleRejectForm = () => {
+    setShowRejectForm(!showRejectForm);
+    setRejectReason("");
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-4 sm:p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Review & Approve Lab Results</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Review & Approve Lab Results
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600"
+            >
               <X size={20} />
             </button>
           </div>
           <p className="text-sm text-gray-600 mt-1">Patient: {patient?.name}</p>
         </div>
-        
-        <div className="p-6 space-y-6">
+
+        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Lab Results Display */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <h4 className="font-medium text-gray-900 mb-3 flex items-center">
@@ -717,86 +990,195 @@ function ResultsReviewModal({ appointment, patient, onClose, onApprove }: Result
                 <div key={index} className="bg-white p-3 rounded border">
                   <h5 className="font-medium text-gray-900">{test.name}</h5>
                   <div className="mt-2 text-sm text-gray-600">
-                    <p><strong>Status:</strong> Completed</p>
-                    <p><strong>Result:</strong> Normal ranges detected</p>
-                    <p><strong>Lab Tech:</strong> James Brown</p>
-                    <p><strong>Completed:</strong> {new Date().toLocaleString()}</p>
-                  </div>
-                  <div className="mt-2">
-                    <button className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1">
-                      <FileText size={14} />
-                      <span>View Detailed Report</span>
-                    </button>
+                    <p>
+                      <strong>Status:</strong> Completed
+                    </p>
+                    <p>
+                      <strong>Result:</strong>{" "}
+                      {appointment.results?.[index] || "Normal ranges detected"}
+                    </p>
+                    <p>
+                      <strong>Lab Tech:</strong>{" "}
+                      {appointment.assignedLabTech
+                        ? `Tech ID: ${appointment.assignedLabTech}`
+                        : "Unknown"}
+                    </p>
+                    <p>
+                      <strong>Completed:</strong>{" "}
+                      {appointment.completionTime
+                        ? new Date(appointment.completionTime).toLocaleString(
+                            "en-NG",
+                            { timeZone: "Africa/Lagos" }
+                          )
+                        : "N/A"}
+                    </p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Doctor's Comments
-              </label>
-              <textarea
-                value={comments}
-                onChange={(e) => setComments(e.target.value)}
-                placeholder="Add your professional comments about the results..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                rows={4}
-              />
+          {/* Uploaded Report Display */}
+          {appointment.report && (
+            <div className="bg-purple-50 p-4 rounded-lg">
+              <h4 className="font-medium text-purple-900 mb-3 flex items-center">
+                <FileText size={16} className="mr-2" />
+                Uploaded Report
+              </h4>
+              <div className="space-y-2 text-sm text-purple-800">
+                <p>
+                  <strong>File:</strong> {appointment.report.file.name}
+                </p>
+                <p>
+                  <strong>Uploaded At:</strong>{" "}
+                  {new Date(appointment.report.uploadedAt).toLocaleString(
+                    "en-NG",
+                    { timeZone: "Africa/Lagos" }
+                  )}
+                </p>
+                <p>
+                  <strong>Technician Notes:</strong>{" "}
+                  {appointment.report.notes || "No notes provided"}
+                </p>
+                <button
+                  onClick={() =>
+                    alert(
+                      `Simulating download/view of file: ${appointment.report.file.name}`
+                    )
+                  }
+                  className="text-blue-600 hover:text-blue-800 flex items-center space-x-1 text-sm mt-2"
+                >
+                  <FileText size={14} />
+                  <span>View/Download Report</span>
+                </button>
+              </div>
             </div>
+          )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Digital Signature
-              </label>
-              <div className="flex items-center space-x-3">
-                <Signature size={20} className="text-gray-400" />
-                <input
-                  type="text"
-                  value={signature}
-                  onChange={(e) => setSignature(e.target.value)}
-                  placeholder="Type your full name as digital signature"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          {/* Approval Form */}
+          {!showRejectForm && (
+            <form onSubmit={handleApproveSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Doctor's Comments
+                </label>
+                <textarea
+                  value={comments}
+                  onChange={(e) => setComments(e.target.value)}
+                  placeholder="Add your professional comments about the results..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  rows={4}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Digital Signature
+                </label>
+                <div className="flex items-center space-x-3">
+                  <Signature size={20} className="text-gray-400" />
+                  <input
+                    type="text"
+                    value={signature}
+                    onChange={(e) => setSignature(e.target.value)}
+                    placeholder="Type your full name as digital signature"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  By typing your name, you digitally sign and approve these
+                  results
+                </p>
+              </div>
+
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="flex items-center space-x-2 text-blue-800">
+                  <AlertCircle size={16} />
+                  <span className="text-sm font-medium">
+                    Results will be securely sent to patient portal with 2FA
+                    protection
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-between space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={toggleRejectForm}
+                  className="px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center space-x-2 text-sm"
+                >
+                  <XCircle size={16} />
+                  <span>Reject Results</span>
+                </button>
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2 text-sm"
+                  >
+                    <CheckCircle size={16} />
+                    <span>Approve & Send to Patient</span>
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+
+          {/* Rejection Form */}
+          {showRejectForm && (
+            <form onSubmit={handleRejectSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for Rejection
+                </label>
+                <textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Provide the reason for rejecting these results..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  rows={4}
                   required
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                By typing your name, you digitally sign and approve these results
-              </p>
-            </div>
 
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex items-center space-x-2 text-blue-800">
-                <AlertCircle size={16} />
-                <span className="text-sm font-medium">
-                  Results will be securely sent to patient portal with 2FA protection
-                </span>
+              <div className="flex justify-between space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={toggleRejectForm}
+                  className="px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
+                >
+                  Back to Approval
+                </button>
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center space-x-2 text-sm"
+                  >
+                    <XCircle size={16} />
+                    <span>Confirm Rejection</span>
+                  </button>
+                </div>
               </div>
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2"
-              >
-                <CheckCircle size={16} />
-                <span>Approve & Send to Patient</span>
-              </button>
-            </div>
-          </form>
+            </form>
+          )}
         </div>
       </div>
     </div>
-  ); 
+  );
 }
 
 export default DoctorDashboard;

@@ -1,7 +1,12 @@
 // src/services/testService.ts
 export async function fetchTests(
   token: string,
-  options: { category?: string; search?: string; page?: number; limit?: number } = {}
+  options: {
+    category?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  } = {}
 ) {
   const params = new URLSearchParams();
 
@@ -34,7 +39,7 @@ export async function fetchTests(
 
     try {
       const res = await fetch(
-        `https://pms-backend-postgresql.onrender.com/api/tests/?${params.toString()}`,
+        `https:localhost:8000/api/tests/?${params.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

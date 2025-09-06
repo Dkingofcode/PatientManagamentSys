@@ -1,11 +1,15 @@
-import  { useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import Rect, { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 //import { useAppointments } from '../../contexts/AppointmentContext';
-import type { RegistrationData } from '../../pages/PatientRegistration';
-import { CreditCard, Banknote, ArrowLeftRight, Calculator, Receipt } from 'lucide-react';
+import type { RegistrationData } from "../../pages/PatientRegistration";
+import {
+  CreditCard,
+  Banknote,
+  ArrowLeftRight,
+  Calculator,
+  Receipt,
+} from "lucide-react";
 //import initialPaymentData from "../../pages/PatientRegistration"
-
-
 
 interface PaymentStepProps {
   data: Partial<RegistrationData>;
@@ -30,61 +34,66 @@ interface PaymentData {
 
 // 2. Create proper initial data
 const initialPaymentData: PaymentData = {
-  selectedPaymentMethod: '',
-  paymentMethods: ['cash', 'card', 'insurance', 'hmo'],
+  selectedPaymentMethod: "",
+  paymentMethods: ["cash", "card", "insurance", "hmo"],
   paymentAmounts: {},
   creditAmount: 0,
   totalAmount: 0,
   totalPaid: 0,
   remainingBalance: 0,
-  processedAt: new Date().toISOString()
+  processedAt: new Date().toISOString(),
 };
 
-function PaymentStep({ data, updateData, onPrev, onComplete }: PaymentStepProps) {
+function PaymentStep({
+  data,
+  updateData,
+  onPrev,
+  onComplete,
+}: PaymentStepProps) {
   const { user } = useAuth();
 
   const paymentOptions = [
-    { 
-      id: 'cash', 
-      label: 'Cash', 
+    {
+      id: "cash",
+      label: "Cash",
       icon: <Banknote />,
-      color: 'border-green-500 bg-green-50',
-      iconBg: 'bg-green-500'
+      color: "border-green-500 bg-green-50",
+      iconBg: "bg-green-500",
     },
-    { 
-      id: 'card', 
-      label: 'Card', 
+    {
+      id: "card",
+      label: "Card",
       icon: <CreditCard />,
-      color: 'border-blue-500 bg-blue-50',
-      iconBg: 'bg-blue-500'
+      color: "border-blue-500 bg-blue-50",
+      iconBg: "bg-blue-500",
     },
-    { 
-      id: 'split', 
-      label: 'Split', 
+    {
+      id: "split",
+      label: "Split",
       icon: <ArrowLeftRight />,
-      color: 'border-purple-500 bg-purple-50',
-      iconBg: 'bg-purple-500'
+      color: "border-purple-500 bg-purple-50",
+      iconBg: "bg-purple-500",
     },
-    { 
-      id: 'credit', 
-      label: 'Credit', 
+    {
+      id: "credit",
+      label: "Credit",
       icon: <Receipt />,
-      color: 'border-orange-500 bg-orange-50',
-      iconBg: 'bg-orange-500'
-    }
+      color: "border-orange-500 bg-orange-50",
+      iconBg: "bg-orange-500",
+    },
   ];
 
   // Get payment data from previous step
-//  const paymentData = data.paymentData || {};
-const paymentData: PaymentData = data.paymentData || initialPaymentData;  
-const { 
-    selectedPaymentMethod = '',
+  //  const paymentData = data.paymentData || {};
+  const paymentData: PaymentData = data.paymentData || initialPaymentData;
+  const {
+    selectedPaymentMethod = "",
     paymentMethods = [],
     paymentAmounts = {},
     creditAmount = 0,
     totalAmount = 0,
-   // totalPaid = 0,
-   // remainingBalance = 0
+    // totalPaid = 0,
+    // remainingBalance = 0
   } = paymentData;
 
   const [discountAmount] = useState(0);
@@ -93,7 +102,7 @@ const {
   const [remainingAmount] = useState(0);
 
   const getCurrentTestPrice = (test: any) => {
-    return test.prices[data.category || 'walk-in'] || test.prices['walk-in'];
+    return test.prices[data.category || "walk-in"] || test.prices["walk-in"];
   };
 
   const handlePaymentMethodSelect = (methodId: string) => {
@@ -104,8 +113,8 @@ const {
   };
 
   const getPaymentMethods = () => {
-    if (selectedPaymentMethod === 'split') {
-      return ['cash', 'card'];
+    if (selectedPaymentMethod === "split") {
+      return ["cash", "card"];
     }
     return selectedPaymentMethod ? [selectedPaymentMethod] : [];
   };
@@ -116,24 +125,27 @@ const {
         ...paymentData,
         paymentAmounts: {
           ...paymentData.paymentAmounts,
-          [methodId]: amount
+          [methodId]: amount,
         },
         totalPaid: getTotalPaid(), // Update derived values
         remainingBalance: totalAmount - (getTotalPaid() + creditAmount),
-      }
+      },
     });
   };
 
   const getTotalPaid = () => {
-    return Object.values(paymentAmounts).reduce((sum: number, amount: any) => sum + (amount || 0), 0);
+    return Object.values(paymentAmounts).reduce(
+      (sum: number, amount: any) => sum + (amount || 0),
+      0
+    );
   };
 
   const setCreditAmount = (amount: number) => {
     updateData({
       paymentData: {
         ...paymentData,
-        creditAmount: amount
-      }
+        creditAmount: amount,
+      },
     });
   };
 
@@ -146,7 +158,7 @@ const {
       discount: discountAmount,
       finalAmount: totalAmount,
       creditAmount,
-      processedBy:  'Unknown',
+      processedBy: "Unknown",
       processedAt: new Date().toISOString(),
     };
 
@@ -154,18 +166,20 @@ const {
       patientInfo: {
         ...data.patientInfo,
         paymentInfo,
-      }
+      },
     });
 
     onComplete();
   };
-  
+
   const isPaymentComplete = getTotalPaid() + creditAmount >= totalAmount;
 
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Process Payment</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Process Payment
+        </h2>
         <p className="text-gray-600">Complete the payment transaction</p>
       </div>
 
@@ -175,20 +189,25 @@ const {
           <Calculator size={20} className="mr-2" />
           Payment Summary
         </h3>
-        
+
         <div className="space-y-3">
           {/* Test Breakdown */}
           <div className="space-y-2">
             {data.tests?.map((test, index) => (
-              <div key={index} className="flex justify-between items-center text-sm">
+              <div
+                key={index}
+                className="flex justify-between items-center text-sm"
+              >
                 <span className="text-gray-700">{test.name}</span>
                 <div className="flex items-center space-x-2">
-                  {getCurrentTestPrice(test) !== test.prices['walk-in'] && (
+                  {getCurrentTestPrice(test) !== test.prices["walk-in"] && (
                     <span className="line-through text-gray-400">
-                      ${test.prices['walk-in']}
+                      ${test.prices["walk-in"]}
                     </span>
                   )}
-                  <span className="font-medium">${getCurrentTestPrice(test)}</span>
+                  <span className="font-medium">
+                    ${getCurrentTestPrice(test)}
+                  </span>
                 </div>
               </div>
             ))}
@@ -199,14 +218,16 @@ const {
               <span className="text-gray-700">Subtotal</span>
               <span className="font-medium">${subtotal}</span>
             </div>
-            
+
             {discountAmount > 0 && (
               <div className="flex justify-between items-center text-green-600">
-                <span>Discount ({discountPercent}% - {data.category?.toUpperCase()})</span>
+                <span>
+                  Discount ({discountPercent}% - {data.category?.toUpperCase()})
+                </span>
                 <span className="font-medium">-${discountAmount}</span>
               </div>
             )}
-            
+
             <div className="flex justify-between items-center text-lg font-bold border-t pt-2">
               <span>Total Amount</span>
               <span>${totalAmount}</span>
@@ -217,8 +238,10 @@ const {
 
       {/* Payment Method Selection */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Payment Method</h3>
-        
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Select Payment Method
+        </h3>
+
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {paymentOptions.map((option) => (
             <button
@@ -227,31 +250,41 @@ const {
               className={`p-4 rounded-lg border-2 transition-all ${
                 selectedPaymentMethod === option.id
                   ? option.color
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                  : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
               }`}
             >
               <div className="flex flex-col items-center">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
-                  selectedPaymentMethod === option.id ? option.iconBg : 'bg-gray-100'
-                } text-white text-xl`}>
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+                    selectedPaymentMethod === option.id
+                      ? option.iconBg
+                      : "bg-gray-100"
+                  } text-white text-xl`}
+                >
                   {option.icon}
                 </div>
-                <span className="text-sm font-medium text-center">{option.label}</span>
+                <span className="text-sm font-medium text-center">
+                  {option.label}
+                </span>
               </div>
             </button>
           ))}
         </div>
 
         {/* Payment Amount Inputs */}
-        {selectedPaymentMethod && selectedPaymentMethod !== 'credit' && (
+        {selectedPaymentMethod && selectedPaymentMethod !== "credit" && (
           <div className="space-y-4">
-            <h4 className="text-md font-semibold text-gray-900">Enter Payment Amounts</h4>
+            <h4 className="text-md font-semibold text-gray-900">
+              Enter Payment Amounts
+            </h4>
             {getPaymentMethods().map((methodId) => {
-              const method = paymentOptions.find(opt => opt.id === methodId);
+              const method = paymentOptions.find((opt) => opt.id === methodId);
               return (
                 <div key={methodId} className="flex items-center space-x-4">
                   <div className="w-20">
-                    <span className="text-sm font-medium text-gray-700">{method?.label || methodId}</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {method?.label || methodId}
+                    </span>
                   </div>
                   <div className="flex-1">
                     <input
@@ -259,8 +292,13 @@ const {
                       min="0"
                       max={totalAmount}
                       step="0.01"
-                      value={paymentAmounts[methodId] || ''}
-                      onChange={(e) => handleAmountChange(methodId, parseFloat(e.target.value) || 0)}
+                      value={paymentAmounts[methodId] || ""}
+                      onChange={(e) =>
+                        handleAmountChange(
+                          methodId,
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="0.00"
                     />
@@ -272,17 +310,21 @@ const {
         )}
 
         {/* Credit Amount Input */}
-        {selectedPaymentMethod === 'credit' && (
+        {selectedPaymentMethod === "credit" && (
           <div className="mt-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-orange-800">Credit Amount</span>
+              <span className="text-sm font-medium text-orange-800">
+                Credit Amount
+              </span>
               <input
                 type="number"
                 min="0"
                 max={totalAmount}
                 step="0.01"
                 value={creditAmount}
-                onChange={(e) => setCreditAmount(parseFloat(e.target.value) || 0)}
+                onChange={(e) =>
+                  setCreditAmount(parseFloat(e.target.value) || 0)
+                }
                 className="w-32 px-3 py-2 border border-orange-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 placeholder="0.00"
               />
@@ -303,7 +345,9 @@ const {
           </div>
           <div>
             <p className="text-sm text-gray-600">Amount Paid</p>
-            <p className="text-lg font-bold text-green-600">${getTotalPaid()}</p>
+            <p className="text-lg font-bold text-green-600">
+              ${getTotalPaid()}
+            </p>
           </div>
           <div>
             <p className="text-sm text-gray-600">Credit Amount</p>
@@ -311,7 +355,11 @@ const {
           </div>
           <div>
             <p className="text-sm text-gray-600">Remaining</p>
-            <p className={`text-lg font-bold ${remainingAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+            <p
+              className={`text-lg font-bold ${
+                remainingAmount > 0 ? "text-red-600" : "text-green-600"
+              }`}
+            >
               ${remainingAmount}
             </p>
           </div>
@@ -320,28 +368,38 @@ const {
 
       {/* Processing Info */}
       <div className="bg-blue-50 rounded-lg p-4 mb-6">
-        <h4 className="text-sm font-medium text-blue-900 mb-2">Payment Processing Details</h4>
+        <h4 className="text-sm font-medium text-blue-900 mb-2">
+          Payment Processing Details
+        </h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
             <span className="text-blue-700">Processed by:</span>
-            <span className="ml-2 font-medium text-blue-900">{'unknown'} ({user?.employeeId})</span>
+            <span className="ml-2 font-medium text-blue-900">
+              {"unknown"} ({user?.employeeId})
+            </span>
           </div>
           <div>
             <span className="text-blue-700">Date & Time:</span>
-            <span className="ml-2 font-medium text-blue-900">{new Date().toLocaleString()}</span>
+            <span className="ml-2 font-medium text-blue-900">
+              {new Date().toLocaleString()}
+            </span>
           </div>
           {paymentMethods.length > 0 && (
             <div>
               <span className="text-blue-700">Payment Method(s):</span>
               <span className="ml-2 font-medium text-blue-900">
-                {getPaymentMethods().map(method => method.toUpperCase()).join(' + ')}
-                {creditAmount > 0 && ' + CREDIT'}
+                {getPaymentMethods()
+                  .map((method) => method.toUpperCase())
+                  .join(" + ")}
+                {creditAmount > 0 && " + CREDIT"}
               </span>
             </div>
           )}
           <div>
             <span className="text-blue-700">Total Transaction:</span>
-            <span className="ml-2 font-medium text-blue-900">${totalAmount}</span>
+            <span className="ml-2 font-medium text-blue-900">
+              ${totalAmount}
+            </span>
           </div>
         </div>
       </div>
