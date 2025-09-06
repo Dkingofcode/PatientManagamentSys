@@ -1,12 +1,8 @@
-import { useState, useEffect } from 'react';
-import type { RegistrationData } from '../../pages/PatientRegistration';
-import { useAppointments } from '../../contexts/AppointmentContext';
-import { Droplets, FlaskConical, Heart, Brain, Eye, X } from 'lucide-react';
-import type { TestType as OriginalTestType } from '../../contexts/AppointmentContext';
-
-interface TestType extends OriginalTestType {
-  description?: string;
-}
+import React, { useState, useEffect } from "react";
+import type { RegistrationData } from "../../pages/PatientRegistration";
+import { useAppointments } from "../../contexts/AppointmentContext";
+import { Droplets, FlaskConical, Heart, Brain, Eye, X } from "lucide-react";
+import type { TestType } from "../../contexts/AppointmentContext";
 
 interface TestSelectionStepProps {
   data: Partial<RegistrationData>;
@@ -16,10 +12,17 @@ interface TestSelectionStepProps {
   currentStep: number;
 }
 
-function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionStepProps) {
+function TestSelectionStep({
+  data,
+  updateData,
+  onNext,
+  onPrev,
+}: TestSelectionStepProps) {
   const { availableTests } = useAppointments();
-  const [selectedTests, setSelectedTests] = useState<TestType[]>(data.tests || []);
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedTests, setSelectedTests] = useState<TestType[]>(
+    data.tests || []
+  );
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   // Helper: safely format price
@@ -37,15 +40,15 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
 
   const getTestIcon = (testName: string) => {
     switch (testName.toLowerCase()) {
-      case 'complete blood count (cbc)':
+      case "complete blood count (cbc)":
         return Droplets;
-      case 'urinalysis':
+      case "urinalysis":
         return FlaskConical;
-      case 'ecg':
+      case "ecg":
         return Heart;
-      case 'ultrasound scan':
+      case "ultrasound scan":
         return Brain;
-      case 'chest x-ray':
+      case "chest x-ray":
         return Eye;
       default:
         return FlaskConical;
@@ -53,11 +56,11 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
   };
 
   const toggleTest = (test: TestType) => {
-    const isSelected = selectedTests.some(t => t.id === test.id);
+    const isSelected = selectedTests.some((t) => t.id === test.id);
     if (isSelected) {
-      setSelectedTests(prev => prev.filter(t => t.id !== test.id));
+      setSelectedTests((prev) => prev.filter((t) => t.id !== test.id));
     } else {
-      setSelectedTests(prev => [...prev, test]);
+      setSelectedTests((prev) => [...prev, test]);
     }
   };
 
@@ -72,19 +75,24 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
     return sum + (isNaN(num) ? 0 : num);
   }, 0);
 
-  const filteredTests = availableTests.filter(test =>
+  const filteredTests = availableTests.filter((test) =>
     test.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Test Selection</h2>
-        <p className="text-gray-600">What test(s) is the patient coming for today?</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Test Selection
+        </h2>
+        <p className="text-gray-600">
+          What test(s) is the patient coming for today?
+        </p>
         {data.category && (
           <p className="text-sm text-purple-500 mt-1">
-            Category: {data.category.replace('-', ' ').toUpperCase()}
-            {(['hmo', 'corporate', 'hospital'].includes(data.category)) && ' (Discount Applied)'}
+            Category: {data.category.replace("-", " ").toUpperCase()}
+            {["hmo", "corporate", "hospital"].includes(data.category) &&
+              " (Discount Applied)"}
           </p>
         )}
       </div>
@@ -94,7 +102,7 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
         <input
           type="text"
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search test..."
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
         />
@@ -110,8 +118,9 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredTests.map((test) => {
               const Icon = getTestIcon(test.name);
-              const isSelected = selectedTests.some(t => t.id === test.id);
-              const rawPrice = String(test.price ?? '0');
+              const isSelected = selectedTests.some((t) => t.id === test.id);
+              const currentPrice = Number(test.price || 0);
+              const hasDiscount = currentPrice !== Number(test.price || 0); // placeholder for discount logic
 
               return (
                 <button
@@ -119,24 +128,35 @@ function TestSelectionStep({ data, updateData, onNext, onPrev }: TestSelectionSt
                   onClick={() => toggleTest(test)}
                   className={`p-4 rounded-lg border-2 transition-all text-left ${
                     isSelected
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      ? "border-purple-500 bg-purple-50"
+                      : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <div
                         className={`p-2 rounded-full ${
-                          isSelected ? 'bg-purple-500' : 'bg-gray-100'
+                          isSelected ? "bg-purple-500" : "bg-gray-100"
                         }`}
                       >
-                        <Icon size={20} className={isSelected ? 'text-white' : 'text-gray-600'} />
+                        <Icon
+                          size={20}
+                          className={
+                            isSelected ? "text-white" : "text-gray-600"
+                          }
+                        />
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-900">{test.name}</h3>
-                        <p className="text-xs text-gray-500">{test.department}</p>
+                        <h3 className="font-medium text-gray-900">
+                          {test.name}
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          {test.department}
+                        </p>
                         {test.description && (
-                          <p className="text-xs text-gray-400 mt-1">{test.description}</p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {test.description}
+                          </p>
                         )}
                         <div className="text-sm text-gray-600">
                           <span>₦{formatPrice(rawPrice)}</span>

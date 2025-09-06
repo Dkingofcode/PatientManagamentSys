@@ -1,8 +1,17 @@
-//import React from 'react';
-import type { RegistrationData } from '../../pages/PatientRegistration';
-import { useAppointments } from '../../contexts/AppointmentContext';
-import { CheckCircle, User, Calendar, Clock, FileText, ArrowLeft, Download, QrCode } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React from "react";
+import type { RegistrationData } from "../../pages/PatientRegistration";
+import { useAppointments } from "../../contexts/AppointmentContext";
+import {
+  CheckCircle,
+  User,
+  Calendar,
+  Clock,
+  FileText,
+  ArrowLeft,
+  Download,
+  QrCode,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface RegistrationSuccessProps {
   patientId: string;
@@ -17,26 +26,29 @@ const parsePrice = (value: any): number => {
   return Number(String(value).replace(/[₦,]/g, "")) || 0;
 };
 
-function RegistrationSuccess({ 
-  patientId, 
-  appointmentId, 
-  registrationData, 
+function RegistrationSuccess({
+  patientId,
+  appointmentId,
+  registrationData,
 }: RegistrationSuccessProps) {
   const { doctors } = useAppointments();
   const navigate = useNavigate();
-  const selectedDoctor = doctors.find(d => d.id === registrationData.doctorId);
+  const selectedDoctor = doctors.find(
+    (d) => d.id === registrationData.doctorId
+  );
 
   // ✅ Safe total calculation
-  const totalPrice = registrationData.tests?.reduce((sum, test) => {
-    return sum + parsePrice(test.price);
-  }, 0) || 0;
+  const totalPrice =
+    registrationData.tests?.reduce((sum, test) => {
+      return sum + parsePrice(test.price);
+    }, 0) || 0;
 
   const generateQRCode = () => {
     alert(`QR Code generated for Patient ID: ${patientId}`);
   };
 
   const downloadSummary = () => {
-    alert('Registration summary downloaded!');
+    alert("Registration summary downloaded!");
   };
 
   return (
@@ -48,8 +60,12 @@ function RegistrationSuccess({
             <CheckCircle size={32} className="text-blue-500" />
           </div>
           <div className="text-center">
-            <h1 className="text-2xl font-bold text-white">Registration Successful!</h1>
-            <p className="text-green-100 mt-1">Patient has been registered and appointment scheduled</p>
+            <h1 className="text-2xl font-bold text-white">
+              Registration Successful!
+            </h1>
+            <p className="text-green-100 mt-1">
+              Patient has been registered and appointment scheduled
+            </p>
           </div>
         </div>
       </div>
@@ -59,7 +75,9 @@ function RegistrationSuccess({
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 mb-6 border border-blue-200">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-2">Patient ID Generated</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                Patient ID Generated
+              </h2>
               <div className="flex items-center space-x-3">
                 <div className="bg-purple-600 text-white px-4 py-2 rounded-lg font-mono text-lg font-bold">
                   {patientId}
@@ -75,7 +93,9 @@ function RegistrationSuccess({
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-600">Appointment ID</p>
-              <p className="font-mono font-semibold text-gray-900">{appointmentId}</p>
+              <p className="font-mono font-semibold text-gray-900">
+                {appointmentId}
+              </p>
             </div>
           </div>
         </div>
@@ -91,20 +111,26 @@ function RegistrationSuccess({
             <div className="space-y-3">
               <div>
                 <p className="text-sm text-gray-600">Full Name</p>
-                <p className="font-medium text-gray-900">{registrationData.patientInfo?.name}</p>
+                <p className="font-medium text-gray-900">
+                  {registrationData.patientInfo?.name}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Email</p>
-                <p className="font-medium text-gray-900">{registrationData.patientInfo?.email}</p>
+                <p className="font-medium text-gray-900">
+                  {registrationData.patientInfo?.email}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Phone</p>
-                <p className="font-medium text-gray-900">{registrationData.patientInfo?.phone}</p>
+                <p className="font-medium text-gray-900">
+                  {registrationData.patientInfo?.phone}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Category</p>
                 <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                  {registrationData.category?.replace('-', ' ').toUpperCase()}
+                  {registrationData.category?.replace("-", " ").toUpperCase()}
                 </span>
               </div>
             </div>
@@ -117,31 +143,33 @@ function RegistrationSuccess({
               Appointment Details
             </h3>
             <div className="space-y-3">
-              {registrationData.doctorId ? (
-                <>
-                  <div>
-                    <p className="text-sm text-gray-600">Doctor</p>
-                    <p className="font-medium text-gray-900">{selectedDoctor?.name ?? 'Not assigned'}</p>
-                    <p className="text-sm text-gray-500">{selectedDoctor?.specialty}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Date & Time</p>
-                    <div className="flex items-center space-x-2">
-                      <Calendar size={16} className="text-gray-400" />
-                      <span className="font-medium text-gray-900">
-                        {registrationData.appointmentDate && 
-                          new Date(registrationData.appointmentDate).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Clock size={16} className="text-gray-400" />
-                      <span className="font-medium text-gray-900">{registrationData.appointmentTime}</span>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <p className="text-sm text-gray-600">Direct lab tests - No doctor appointment required</p>
-              )}
+              <div>
+                <p className="text-sm text-gray-600">Doctor</p>
+                <p className="font-medium text-gray-900">
+                  {selectedDoctor?.name}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {selectedDoctor?.specialty}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Date & Time</p>
+                <div className="flex items-center space-x-2">
+                  <Calendar size={16} className="text-gray-400" />
+                  <span className="font-medium text-gray-900">
+                    {registrationData.appointmentDate &&
+                      new Date(
+                        registrationData.appointmentDate
+                      ).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2 mt-1">
+                  <Clock size={16} className="text-gray-400" />
+                  <span className="font-medium text-gray-900">
+                    {registrationData.appointmentTime}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -154,10 +182,15 @@ function RegistrationSuccess({
           </h3>
           <div className="space-y-3">
             {registrationData.tests?.map((test, index) => (
-              <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0">
+              <div
+                key={index}
+                className="flex items-center justify-between py-2 border-b border-gray-200 last:border-b-0"
+              >
                 <div>
                   <p className="font-medium text-gray-900">{test.name}</p>
-                  <p className="text-sm text-gray-500">{test.duration} minutes</p>
+                  <p className="text-sm text-gray-500">
+                    {test.duration} minutes
+                  </p>
                 </div>
                 <div className="text-right">
                   {/* ✅ Safe price display */}
@@ -168,7 +201,9 @@ function RegistrationSuccess({
               </div>
             ))}
             <div className="flex items-center justify-between pt-3 border-t border-gray-300">
-              <p className="text-lg font-semibold text-gray-900">Total Amount</p>
+              <p className="text-lg font-semibold text-gray-900">
+                Total Amount
+              </p>
               <p className="text-xl font-bold text-purple-700">
                 ₦{totalPrice.toLocaleString()}
               </p>
@@ -178,7 +213,9 @@ function RegistrationSuccess({
 
         {/* Next Steps */}
         <div className="bg-blue-50 rounded-lg p-6 mb-6 border border-blue-200">
-          <h3 className="text-lg font-semibold text-blue-900 mb-3">Next Steps</h3>
+          <h3 className="text-lg font-semibold text-blue-900 mb-3">
+            Next Steps
+          </h3>
           <ul className="space-y-2 text-sm text-blue-800">
             <li className="flex items-start">
               <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
@@ -208,7 +245,7 @@ function RegistrationSuccess({
             <ArrowLeft size={20} />
             <span>Back to Dashboard</span>
           </button>
-          
+
           <button
             onClick={downloadSummary}
             className="flex items-center justify-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -216,7 +253,7 @@ function RegistrationSuccess({
             <Download size={20} />
             <span>Download Summary</span>
           </button>
-          
+
           <button
             onClick={() => window.print()}
             className="flex items-center justify-center space-x-2 px-6 py-3 bg-purple-700 text-white rounded-lg hover:bg-purple-800 transition-colors"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Home, Stethoscope, FlaskConical, User, Warehouse } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
@@ -7,13 +7,36 @@ export default function SettingsSidebar() {
   const [active, setActive] = useState("frontdesk");
 
   const menuItems = [
-    { id: "frontdesk", label: "Frontdesk Dashboard", icon: <Home className="w-5 h-5" />, path: "/front-desk" },
-    { id: "doctor", label: "Doctor Dashboard", icon: <Stethoscope className="w-5 h-5" />, path: "/doctor" },
-    { id: "labtech", label: "LabTech Dashboard", icon: <FlaskConical className="w-5 h-5" />, path: "/lab-technician" },
-    { id: "inventory", label: "Inventory Dashboard", icon: <Warehouse className="w-5 h-5" />, path: "/inventory"},
-    { id: "account", label: "Account Dashboard", icon: <User className="w-5 h-5" />, path: "/account" },
-    { id: "radiography", label: "Radiography Dashboard", icon: <User className="w-3 h-5" />, path: "/radiography" },
-    { id: "sonography", label: "Sonography Dashboard", icon: <User className="w-4 h-5" />, path: "/sonography" },
+    {
+      id: "frontdesk",
+      label: "Frontdesk Dashboard",
+      icon: <Home className="w-5 h-5" />,
+      path: "/front-desk",
+    },
+    {
+      id: "doctor",
+      label: "Doctor Dashboard",
+      icon: <Stethoscope className="w-5 h-5" />,
+      path: "/doctor",
+    },
+    {
+      id: "labtech",
+      label: "LabTech Dashboard",
+      icon: <FlaskConical className="w-5 h-5" />,
+      path: "/lab-technician",
+    },
+    {
+      id: "inventory",
+      label: "Inventory Dashboard",
+      icon: <Warehouse className="w-5 h-5" />,
+      path: "/inventory",
+    },
+    {
+      id: "account",
+      label: "Account Dashboard",
+      icon: <User className="w-5 h-5" />,
+      path: "/account",
+    },
   ];
 
   return (
@@ -30,9 +53,10 @@ export default function SettingsSidebar() {
             to={item.path}
             onClick={() => setActive(item.id)}
             className={`flex items-center gap-3 p-3 rounded-xl transition 
-              ${active === item.id 
-                ? "bg-blue-100 text-blue-700 font-semibold" 
-                : "hover:bg-gray-100 text-gray-700"
+              ${
+                active === item.id
+                  ? "bg-blue-100 text-blue-700 font-semibold"
+                  : "hover:bg-gray-100 text-gray-700"
               }`}
           >
             {item.icon}

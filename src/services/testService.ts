@@ -1,7 +1,11 @@
-// src/services/testService.ts
 export async function fetchTests(
   token: string,
-  options: { category?: string; search?: string; page?: number; limit?: number } = {}
+  options: {
+    category?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  } = {}
 ) {
   const params = new URLSearchParams();
 
@@ -15,6 +19,7 @@ export async function fetchTests(
     
   };
 
+<<<<<<< HEAD
   const fetchWithTimeout = new Promise(async (resolve) => {
     const timer = setTimeout(() => {
       console.warn("Fetch timed out, returning dummy data...");
@@ -30,21 +35,36 @@ export async function fetchTests(
           },
         }
       );
+=======
 
-      clearTimeout(timer);
+  return dummyData;
+//   try {
+//     const res = await fetch(
+//       `https://localhost:8000/api/tests/?${params.toString()}`,
+//       {
+//         headers: {
+//           Authorization: `Bearer ${token}`,
+//         },
+//       }
+//     );
+>>>>>>> 1e28d40ea2b85bbc5714d68e396970b29f62fb1a
 
-      if (!res.ok) {
-        console.error("API error, using dummy data...");
-        resolve(dummyData);
-      } else {
-        resolve(await res.json());
-      }
-    } catch (err) {
-      clearTimeout(timer);
-      console.error("Fetch failed, using dummy data...", err);
-      resolve(dummyData);
-    }
-  });
+//     if (!res.ok) {
+//       console.error("API error, using dummy data...");
+//       return dummyData;
+//     }
 
+//     return await res.json();
+//   } catch (err) {
+//     console.error("Fetch failed, using dummy data...", err);
+//     return dummyData;
+//   }
+// }
+
+<<<<<<< HEAD
   return await fetchWithTimeout; // <-- important
 }
+=======
+
+}
+>>>>>>> 1e28d40ea2b85bbc5714d68e396970b29f62fb1a
