@@ -70,9 +70,9 @@ function LoginPage() {
   useEffect(() => {
     if (isAuthenticated && user) {
       const roleRoutes = {
-        "front-desk": "/front-desk",
+        front_desk: "/front-desk",
         doctor: "/doctor",
-        "lab-technician": "/lab-technician",
+        lab_tech: "/lab-technician",
         admin: "/admin",
         inventory: "/manager",
         patient: "/patient",

@@ -506,7 +506,9 @@ export function AppointmentProvider({ children }: { children: ReactNode }) {
   const [appointments, setAppointments] =
   useState<Appointment[]>(dummyTestAssignments);
   const [doctors] = useState<Doctor[]>(mockDoctors);
-const [availableTests, setAvailableTests] = useState<TestType[]>([]);
+  const [availableTests, setAvailableTests] = useState<TestType[]>([]);
+  const [results, setResults] = useState([]);
+
 
   // Use useEffect to set state only when dummyTestAssignments changes
   useEffect(() => {
@@ -523,6 +525,8 @@ const [availableTests, setAvailableTests] = useState<TestType[]>([]);
         ]);
         setPatients(patientsRes.data);
         setAppointments(appointmentsRes.data);
+
+        await fetchResults();
       } catch (err) {
         console.error("Error fetching data", err);
         // Fallback to dummy data if API fails
@@ -653,7 +657,7 @@ const [availableTests, setAvailableTests] = useState<TestType[]>([]);
     try {
       const formData = new FormData();
       formData.append("resultFile", report.file); // 🔑 must match upload.single('resultFile')
-      formData.append("testRequestId", "1234-56789");
+      formData.append("testRequestId", "f39e7349-6e5b-422a-b66c-54369baef968");
       formData.append("interpretation", report.interpretation);
       formData.append("comments", report.comments);
       formData.append("qualityControl", report.qualityControl);
@@ -685,6 +689,30 @@ const [availableTests, setAvailableTests] = useState<TestType[]>([]);
       throw err;
     }
   };
+
+  const fetchResults = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found, cannot fetch results");
+      return;
+    }
+
+    const response = await axios.get(`http://localhost:8000/api/results`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    // API returns { results, pagination }
+    const fetchedResults = response.data.results || [];
+
+    setResults(fetchedResults);
+
+  } catch (err) {
+    console.error("Error fetching results", err);
+  }
+};
+
+
 
   const getPatientById = (id: string) =>
     patients.find((patient) => patient.id === id);
@@ -931,6 +959,7 @@ const [availableTests, setAvailableTests] = useState<TestType[]>([]);
         getApprovedAppointments,
         availableTests,
         getDiscountPercent,
+        fetchResults
        // refreshTests,
       }}
     >

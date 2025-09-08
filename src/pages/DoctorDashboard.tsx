@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import io, { Socket } from "socket.io-client";
 import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
 import { useAppointments } from "../contexts/AppointmentContext";
 import { useNotifications } from "../contexts/NotificationContext";
+import axios from "axios";
+import ApproveResultForm from "../components/Modals/HandleApprove";
 import {
   Clock,
   Users,
@@ -21,7 +24,10 @@ import {
   FileText,
   FileSignature as Signature,
   XCircle,
+  Bell,
 } from "lucide-react";
+import ResultModal from "../components/Modals/ResultModal";
+import { useNavigate } from "react-router-dom";
 
 interface Appointment {
   id: string;
@@ -72,37 +78,213 @@ interface Appointment {
   completionTime?: string;
   priority?: "low" | "normal" | "high";
   department?: string;
-  report?: { file: File; notes: string; uploadedAt: string };
+  report?: { file: File; notes: string; uploadedAt: string; fileUrl?: string };
+}
+
+interface Notification {
+  id: string;
+  testRequestId: string;
+  resultId: string;
+  patientName: string;
+  testName: string;
+  submittedBy: string;
+  fileName: string;
+  fileUrl: string;
+  receivedAt: string;
+  read: boolean;
+}
+
+interface Result {
+  id: string;
+  testRequestId: string;
+  resultId: string;
+  patientName: string;
+  testName: string;
+  submittedBy: string;
+  fileName: string;
+  fileUrl: string;
+  receivedAt: string;
+  read: boolean;
 }
 
 function DoctorDashboard() {
   const { user } = useAuth();
-  const { appointments, patients, updateAppointment, rescheduleAppointment } =
+  const { appointments, patients, updateAppointment, rescheduleAppointment, fetchResults } =
     useAppointments();
   const { addNotification } = useNotifications();
-
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [showResultsModal, setShowResultsModal] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] =
-    useState<Appointment | null>(null);
-  console.log(appointments);
-  // Get today's date
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isLoadingResults, setIsLoadingResults] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [results, setResults] = useState([]);
+  const [selectedResultId, setSelectedResultId] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+
   const today = new Date().toISOString().split("T")[0];
 
-  // Filter appointments for the logged-in doctor
+  // Fetch all existing test results
+  useEffect(() => {
+    const fetchAllResults = async () => {
+      if (!user?.id) return;
+      try {
+        const response = await axios.get("http://localhost:8000/api/results", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        console.log("API response:", response.data);
+        const fetchedResults = response.data.results || [];
+        setResults(fetchedResults); // Set results state
+        const fetchedNotifications = fetchedResults.map((result: any) => ({
+          id: `notif-${result.resultId}-${result.receivedAt}`,
+          testRequestId: result.testRequestId,
+          resultId: result.resultId,
+          patientName: result.patientName,
+          testName: result.testName,
+          submittedBy: result.submittedBy,
+          fileName: result.fileName,
+          fileUrl: result.fileUrl,
+          receivedAt: result.receivedAt,
+          read: result.read || false,
+        }));
+        setNotifications((prev) => {
+          const existingIds = new Set(prev.map((n) => n.resultId));
+          const newNotifications = fetchedNotifications.filter(
+            (n: Notification) => !existingIds.has(n.resultId)
+          );
+          return [...newNotifications, ...prev];
+        });
+
+        console.log(notifications);
+        
+
+        // Fetch results for lab-completed appointments
+        const labCompletedAppointments = appointments.filter(
+          (apt) => apt.status === "lab-completed" && !apt.report
+        );
+        for (const appointment of labCompletedAppointments) {
+          try {
+            await fetchResults(appointment.id);
+          } catch (err) {
+            console.error(`Error fetching results for appointment ${appointment.id}:`, err);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching all results:", err);
+        addNotification({
+          title: "Error",
+          message: "Failed to fetch test results.",
+          type: "error",
+        });
+      }
+    };
+    fetchAllResults();
+  }, [user?.id, appointments, fetchResults, addNotification]);
+
+  // Initialize Socket.IO for real-time notifications
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found for Socket.IO authentication");
+      return;
+    }
+
+    const socketInstance = io("http://localhost:8000", {
+      auth: { token },
+    });
+
+    socketInstance.on("connect", () => {
+      console.log("Connected to Socket.IO server");
+      socketInstance.emit("join", "doctor");
+    });
+
+    socketInstance.on("connect_error", (err) => {
+      console.error("Socket.IO connection error:", err.message);
+      addNotification({
+        title: "Connection Error",
+        message: "Failed to connect to real-time notifications.",
+        type: "error",
+      });
+    });
+
+    socketInstance.on("result_submitted", (data: any) => {
+      console.log("Received result_submitted event:", data);
+      const notification: Notification = {
+        id: `notif-${Date.now()}-${data.resultId}`,
+        testRequestId: data.testRequestId,
+        resultId: data.resultId,
+        patientName: data.patientName,
+        testName: data.testName,
+        submittedBy: data.submittedBy,
+        fileName: data.fileName || "Result File",
+        fileUrl: `/api/files/${data.resultId}`,
+        receivedAt: new Date().toISOString(),
+        read: false,
+      };
+      setNotifications((prev) => {
+        if (prev.some((n) => n.resultId === notification.resultId)) {
+          return prev;
+        }
+        return [notification, ...prev];
+      });
+
+
+      setResults((prev) => {
+        if (prev.some((r) => r.resultId === data.resultId)) {
+          return prev;
+        }
+        return [
+          {
+            id: `notif-${Date.now()}-${data.resultId}`,
+            testRequestId: data.testRequestId,
+            resultId: data.resultId,
+            patientName: data.patientName,
+            testName: data.testName,
+            submittedBy: data.submittedBy,
+            fileName: data.fileName || "Result File",
+            fileUrl: `/api/files/${data.resultId}`,
+            receivedAt: new Date().toISOString(),
+            read: false,
+          },
+          ...prev,
+        ];
+      });
+      addNotification({
+        title: "New Test Result",
+        message: `Result for ${data.patientName}'s ${data.testName} submitted by ${data.submittedBy}`,
+        type: "info",
+      });
+    });
+
+    setSocket(socketInstance);
+
+    return () => {
+      socketInstance.disconnect();
+      console.log("Disconnected from Socket.IO server");
+    };
+  }, [addNotification]);
+
+  if (!user) {
+    navigate("/login");
+    return null;
+  }
+
+  console.log(notifications);
+  console.log(results);
+
   const doctorAppointments = appointments.filter(
     (appointment) => appointment.doctorId === user.id
   );
 
-  // Today's appointments
   const todayAppointments = doctorAppointments.filter(
     (appointment) => appointment.date === today
   );
 
-  // Filter appointments based on search and status
   const filteredAppointments = doctorAppointments.filter((appointment) => {
     const patient = patients.find((p) => p.id === appointment.patientId);
     const matchesSearch =
@@ -114,7 +296,6 @@ function DoctorDashboard() {
     return matchesSearch && matchesStatus;
   });
 
-  // Calculate statistics
   const pendingRequests = doctorAppointments.filter(
     (apt) => apt.status === "scheduled" && !apt.doctorApproved
   ).length;
@@ -128,6 +309,24 @@ function DoctorDashboard() {
     (apt) => apt.status === "lab-completed" && apt.report
   ).length;
 
+  const handleViewResults = async (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsLoadingResults(true);
+    try {
+      await fetchResults(appointment.id);
+      setShowResultsModal(true);
+    } catch (err) {
+      console.error("Error fetching results:", err);
+      addNotification({
+        title: "Error",
+        message: "Failed to fetch test results. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setIsLoadingResults(false);
+    }
+  };
+
   const handleReschedule = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setShowRescheduleModal(true);
@@ -138,24 +337,13 @@ function DoctorDashboard() {
     setShowApprovalModal(true);
   };
 
-  const handleViewResults = (appointment: Appointment) => {
-    setSelectedAppointment(appointment);
-    setShowResultsModal(true);
-  };
-
-  const submitReschedule = (
-    newDate: string,
-    newTime: string,
-    reason: string
-  ) => {
+  const submitReschedule = (newDate: string, newTime: string, reason: string) => {
     if (selectedAppointment) {
-      const patient = patients.find(
-        (p) => p.id === selectedAppointment.patientId
-      );
+      const patient = patients.find((p) => p.id === selectedAppointment.patientId);
       rescheduleAppointment(selectedAppointment.id, newDate, newTime, reason);
       addNotification({
         title: "Appointment Rescheduled",
-        message: `Appointment for ${patient?.name} has been rescheduled from ${selectedAppointment.date} ${selectedAppointment.time} to ${newDate} at ${newTime}`,
+        message: `Appointment for ${patient?.name} has been rescheduled to ${newDate} at ${newTime}`,
         type: "info",
       });
       setShowRescheduleModal(false);
@@ -165,9 +353,7 @@ function DoctorDashboard() {
 
   const approveAndForwardToLab = (labTechnicianId?: string) => {
     if (selectedAppointment) {
-      const patient = patients.find(
-        (p) => p.id === selectedAppointment.patientId
-      );
+      const patient = patients.find((p) => p.id === selectedAppointment.patientId);
       updateAppointment(selectedAppointment.id, {
         doctorApproved: true,
         labAssigned: true,
@@ -178,7 +364,7 @@ function DoctorDashboard() {
       addNotification({
         title: "Tests Approved & Forwarded to Lab",
         message: `Tests for ${patient?.name} (${selectedAppointment.tests
-          .map((t: any) => t.name)
+          .map((t) => t.name)
           .join(", ")}) have been approved and forwarded to lab technicians`,
         type: "success",
       });
@@ -189,9 +375,7 @@ function DoctorDashboard() {
 
   const approveResults = (signature: string, comments: string) => {
     if (selectedAppointment) {
-      const patient = patients.find(
-        (p) => p.id === selectedAppointment.patientId
-      );
+      const patient = patients.find((p) => p.id === selectedAppointment.patientId);
       updateAppointment(selectedAppointment.id, {
         status: "completed",
         doctorSignature: signature,
@@ -200,7 +384,7 @@ function DoctorDashboard() {
       });
       addNotification({
         title: "Results Approved & Sent to Patient",
-        message: `Test results for ${patient?.name} have been approved and securely sent to patient portal with 2FA protection`,
+        message: `Test results for ${patient?.name} have been approved and sent to patient portal`,
         type: "success",
       });
       setShowResultsModal(false);
@@ -210,9 +394,7 @@ function DoctorDashboard() {
 
   const rejectResults = (comments: string) => {
     if (selectedAppointment) {
-      const patient = patients.find(
-        (p) => p.id === selectedAppointment.patientId
-      );
+      const patient = patients.find((p) => p.id === selectedAppointment.patientId);
       updateAppointment(selectedAppointment.id, {
         status: "rejected",
         doctorComments: comments,
@@ -228,9 +410,152 @@ function DoctorDashboard() {
     }
   };
 
+  const handleDownloadFile = async (notification: Notification) => {
+    try {
+      const response = await fetch(`http://localhost:8000${notification.fileUrl}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      if (!response.ok) throw new Error("Failed to download file");
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = notification.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      // Mark notification as read
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notification.id ? { ...n, read: true } : n
+        )
+      );
+
+      // Optionally mark as read in backend
+      await axios.patch(
+        `http://localhost:8000/api/results/${notification.resultId}/read`,
+        {},
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+      );
+    } catch (err) {
+      console.error("Error downloading file:", err);
+      addNotification({
+        title: "Error",
+        message: "Failed to download file. Please try again.",
+        type: "error",
+      });
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
   return (
     <Layout title="">
-      <div className="space-y-6 px-2 sm:px-4">
+      <div className="space-y-6 px-2 sm:px-4 relative">
+        {/* Message Box */}
+        <div className="fixed top-4 right-4 z-50">
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="relative p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors"
+              title="Notifications"
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
+                <div className="p-4 border-b border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Notifications ({notifications.length})
+                  </h3>
+                </div>
+                {notifications.length > 0 ? (
+                  <div className="divide-y divide-gray-200">
+                    {results.results.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 hover:bg-gray-50 transition-colors ${
+                          notification.read ? "bg-gray-50" : "bg-white"
+                        }`}
+                      >
+                        <p className="text-sm font-medium text-gray-900">
+                          Result for {notification.testName}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          Patient: {notification.patientName}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          Submitted by: {notification.submittedBy}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          File: {notification.fileName}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Received: {new Date(notification.receivedAt).toLocaleString("en-NG", {
+                            timeZone: "Africa/Lagos",
+                          })}
+                        </p>
+                        <div className="mt-2 flex space-x-2">
+                          <button
+                            onClick={() => handleDownloadFile(notification)}
+                            className="text-blue-600 hover:text-blue-800 flex items-center space-x-1 text-xs"
+                          >
+                            <FileText size={14} />
+                            <span>View/Download</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedResultId(notification.resultId);
+                              setShowModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 flex items-center space-x-1 text-xs"
+                          >
+                            <Eye size={14} />
+                            <span>Review</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    No new notifications
+                  </div>
+                )}
+              </div>
+            )}
+            {showModal && selectedResultId && (
+              <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className="bg-white p-6 rounded w-1/2">
+                  <h3 className="text-lg font-semibold mb-4">Approve Result</h3>
+                  <ApproveResultForm
+                    resultId={selectedResultId}
+                    onDone={() => {
+                      setShowModal(false);
+                      setSelectedResultId(null);
+                      // Refresh results after approval
+                      window.location.reload();
+                    }}
+                  />
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="mt-4 px-3 py-1 bg-gray-500 text-white rounded"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Header */}
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-[#3065B5]">
@@ -348,7 +673,7 @@ function DoctorDashboard() {
               })}
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Showing appointments for Dr. {user.name || "Trerty"} ID: {user.id}
+              Showing appointments for Dr. {user.name || "Unknown"} ID: {user.id}
             </p>
           </div>
 
@@ -447,7 +772,7 @@ function DoctorDashboard() {
         )}
 
         {showResultsModal && selectedAppointment && (
-          <ResultsReviewModal
+          <ResultModal
             appointment={selectedAppointment}
             patient={patients.find(
               (p) => p.id === selectedAppointment.patientId
@@ -458,6 +783,7 @@ function DoctorDashboard() {
             }}
             onApprove={approveResults}
             onReject={rejectResults}
+            isLoading={isLoadingResults}
           />
         )}
       </div>
@@ -523,6 +849,7 @@ function AppointmentCard({
       }`}
     >
       <div className="flex items-start justify-between">
+        {/* Left Side: Patient Info */}
         <div className="flex items-start space-x-3 sm:space-x-4">
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-full flex items-center justify-center">
             <User size={16} className="text-blue-600" />
@@ -542,7 +869,8 @@ function AppointmentCard({
               )}
             </div>
 
-            <div className="flex flex-wrap items-center space-x-2 sm:space-x-4 mb-2 sm:mb-3">
+            <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-3">
+              {/* Status Badge */}
               <span
                 className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(
                   appointment.status
@@ -550,9 +878,9 @@ function AppointmentCard({
               >
                 {getStatusText(appointment.status)}
               </span>
+
               <span className="text-xs sm:text-sm text-gray-600">
-                Category:{" "}
-                {patient?.category?.replace("-", " ") || "Not specified"}
+                Category: {patient?.category?.replace("-", " ") || "Not specified"}
               </span>
               <span className="text-xs sm:text-sm text-gray-600">
                 Date: {appointment.date}
@@ -562,12 +890,13 @@ function AppointmentCard({
               </span>
             </div>
 
+            {/* Requested Tests */}
             <div className="mb-2 sm:mb-3">
               <p className="text-xs sm:text-sm text-gray-600 mb-1">
                 Requested Tests:
               </p>
               <div className="flex flex-wrap gap-2">
-                {appointment.tests.map((test: any, index: number) => (
+                {appointment.tests.map((test, index) => (
                   <span
                     key={index}
                     className="inline-flex px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded"
@@ -578,23 +907,22 @@ function AppointmentCard({
               </div>
             </div>
 
-            {appointment.rescheduleHistory &&
-              appointment.rescheduleHistory.length > 0 && (
-                <div className="text-xs text-orange-600 mb-2">
-                  <span className="font-medium">Rescheduled:</span>{" "}
-                  {
-                    appointment.rescheduleHistory[
-                      appointment.rescheduleHistory.length - 1
-                    ].reason
-                  }
-                </div>
-              )}
+            {/* Reschedule History */}
+            {appointment.rescheduleHistory?.length > 0 && (
+              <div className="text-xs text-orange-600 mb-2">
+                <span className="font-medium">Rescheduled:</span>{" "}
+                {
+                  appointment.rescheduleHistory[
+                    appointment.rescheduleHistory.length - 1
+                  ].reason
+                }
+              </div>
+            )}
 
+            {/* Approval Info */}
             {appointment.doctorApproved && (
               <div className="text-xs text-green-600 mb-2">
-                <span className="font-medium">
-                  ✅ Approved for Lab Processing
-                </span>
+                <span className="font-medium">✅ Approved for Lab Processing</span>
                 {appointment.approvedAt && (
                   <span className="ml-2">
                     on{" "}
@@ -606,16 +934,17 @@ function AppointmentCard({
               </div>
             )}
 
-            {appointment.status === "rejected" &&
-              appointment.doctorComments && (
-                <div className="text-xs text-red-600 mb-2">
-                  <span className="font-medium">Rejected:</span>{" "}
-                  {appointment.doctorComments}
-                </div>
-              )}
+            {/* Rejection Info */}
+            {appointment.status === "rejected" && appointment.doctorComments && (
+              <div className="text-xs text-red-600 mb-2">
+                <span className="font-medium">Rejected:</span>{" "}
+                {appointment.doctorComments}
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Right Side: Actions */}
         <div className="flex items-center space-x-2 sm:space-x-3">
           <button
             onClick={onReschedule}
@@ -626,38 +955,33 @@ function AppointmentCard({
             <span>Reschedule</span>
           </button>
 
-          {!appointment.doctorApproved ? (
+          {appointment.status === "scheduled" && (
             <button
               onClick={onApprove}
               className="px-2 sm:px-3 py-1 sm:py-2 bg-green-600 text-white text-xs sm:text-sm rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-1"
               title="Approve & Forward to Lab"
             >
               <CheckCircle size={16} />
-              <span>Approve & Forward</span>
+              <span>Approve</span>
             </button>
-          ) : appointment.status === "lab-completed" && appointment.report ? (
+          )}
+
+          {appointment.status === "lab-completed" && (
             <button
               onClick={onViewResults}
-              className="px-2 sm:px-3 py-1 sm:py-2 bg-purple-600 text-white text-xs sm:text-sm rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-1"
-              title="Review & Approve Results"
+              className="px-2 sm:px-3 py-1 sm:py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-1"
+              title="View Results"
             >
               <Eye size={16} />
-              <span>Review Results</span>
+              <span>View Results</span>
             </button>
-          ) : (
-            <div
-              className="flex items-center text-green-600"
-              title="Approved for Lab"
-            >
-              <CheckCircle size={16} />
-              <span className="text-xs ml-1">Approved</span>
-            </div>
           )}
         </div>
       </div>
     </div>
   );
 }
+
 
 interface RescheduleModalProps {
   appointment: Appointment;
@@ -844,7 +1168,7 @@ function ApprovalModal({
           <div className="bg-blue-50 p-4 rounded-lg">
             <h4 className="font-medium text-blue-900 mb-2">Test Details</h4>
             <div className="space-y-2">
-              {appointment.tests.map((test: any, index: number) => (
+              {appointment.tests.map((test, index) => (
                 <div
                   key={index}
                   className="flex justify-between items-center text-sm"
@@ -897,8 +1221,7 @@ function ApprovalModal({
             <div className="flex items-center space-x-2 text-green-800">
               <AlertCircle size={16} />
               <span className="text-sm font-medium">
-                By approving, you confirm the test requests are accurate and
-                ready for lab processing.
+                By approving, you confirm the test requests are accurate and ready for lab processing.
               </span>
             </div>
           </div>
@@ -920,262 +1243,6 @@ function ApprovalModal({
             </button>
           </div>
         </form>
-      </div>
-    </div>
-  );
-}
-
-interface ResultsReviewModalProps {
-  appointment: Appointment;
-  patient: any;
-  onClose: () => void;
-  onApprove: (signature: string, comments: string) => void;
-  onReject: (comments: string) => void;
-}
-
-function ResultsReviewModal({
-  appointment,
-  patient,
-  onClose,
-  onApprove,
-  onReject,
-}: ResultsReviewModalProps) {
-  const [signature, setSignature] = useState("");
-  const [comments, setComments] = useState("");
-  const [rejectReason, setRejectReason] = useState("");
-  const [showRejectForm, setShowRejectForm] = useState(false);
-
-  const handleApproveSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onApprove(signature, comments);
-  };
-
-  const handleRejectSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onReject(rejectReason);
-  };
-
-  const toggleRejectForm = () => {
-    setShowRejectForm(!showRejectForm);
-    setRejectReason("");
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="p-4 sm:p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Review & Approve Lab Results
-            </h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X size={20} />
-            </button>
-          </div>
-          <p className="text-sm text-gray-600 mt-1">Patient: {patient?.name}</p>
-        </div>
-
-        <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-          {/* Lab Results Display */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium text-gray-900 mb-3 flex items-center">
-              <FileText size={16} className="mr-2" />
-              Lab Results
-            </h4>
-            <div className="space-y-3">
-              {appointment.tests.map((test: any, index: number) => (
-                <div key={index} className="bg-white p-3 rounded border">
-                  <h5 className="font-medium text-gray-900">{test.name}</h5>
-                  <div className="mt-2 text-sm text-gray-600">
-                    <p>
-                      <strong>Status:</strong> Completed
-                    </p>
-                    <p>
-                      <strong>Result:</strong>{" "}
-                      {appointment.results?.[index] || "Normal ranges detected"}
-                    </p>
-                    <p>
-                      <strong>Lab Tech:</strong>{" "}
-                      {appointment.assignedLabTech
-                        ? `Tech ID: ${appointment.assignedLabTech}`
-                        : "Unknown"}
-                    </p>
-                    <p>
-                      <strong>Completed:</strong>{" "}
-                      {appointment.completionTime
-                        ? new Date(appointment.completionTime).toLocaleString(
-                            "en-NG",
-                            { timeZone: "Africa/Lagos" }
-                          )
-                        : "N/A"}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Uploaded Report Display */}
-          {appointment.report && (
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <h4 className="font-medium text-purple-900 mb-3 flex items-center">
-                <FileText size={16} className="mr-2" />
-                Uploaded Report
-              </h4>
-              <div className="space-y-2 text-sm text-purple-800">
-                <p>
-                  <strong>File:</strong> {appointment.report.file.name}
-                </p>
-                <p>
-                  <strong>Uploaded At:</strong>{" "}
-                  {new Date(appointment.report.uploadedAt).toLocaleString(
-                    "en-NG",
-                    { timeZone: "Africa/Lagos" }
-                  )}
-                </p>
-                <p>
-                  <strong>Technician Notes:</strong>{" "}
-                  {appointment.report.notes || "No notes provided"}
-                </p>
-                <button
-                  onClick={() =>
-                    alert(
-                      `Simulating download/view of file: ${appointment.report.file.name}`
-                    )
-                  }
-                  className="text-blue-600 hover:text-blue-800 flex items-center space-x-1 text-sm mt-2"
-                >
-                  <FileText size={14} />
-                  <span>View/Download Report</span>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Approval Form */}
-          {!showRejectForm && (
-            <form onSubmit={handleApproveSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Doctor's Comments
-                </label>
-                <textarea
-                  value={comments}
-                  onChange={(e) => setComments(e.target.value)}
-                  placeholder="Add your professional comments about the results..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  rows={4}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Digital Signature
-                </label>
-                <div className="flex items-center space-x-3">
-                  <Signature size={20} className="text-gray-400" />
-                  <input
-                    type="text"
-                    value={signature}
-                    onChange={(e) => setSignature(e.target.value)}
-                    placeholder="Type your full name as digital signature"
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                    required
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  By typing your name, you digitally sign and approve these
-                  results
-                </p>
-              </div>
-
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="flex items-center space-x-2 text-blue-800">
-                  <AlertCircle size={16} />
-                  <span className="text-sm font-medium">
-                    Results will be securely sent to patient portal with 2FA
-                    protection
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex justify-between space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={toggleRejectForm}
-                  className="px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center space-x-2 text-sm"
-                >
-                  <XCircle size={16} />
-                  <span>Reject Results</span>
-                </button>
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center space-x-2 text-sm"
-                  >
-                    <CheckCircle size={16} />
-                    <span>Approve & Send to Patient</span>
-                  </button>
-                </div>
-              </div>
-            </form>
-          )}
-
-          {/* Rejection Form */}
-          {showRejectForm && (
-            <form onSubmit={handleRejectSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason for Rejection
-                </label>
-                <textarea
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  placeholder="Provide the reason for rejecting these results..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                  rows={4}
-                  required
-                />
-              </div>
-
-              <div className="flex justify-between space-x-3 pt-4">
-                <button
-                  type="button"
-                  onClick={toggleRejectForm}
-                  className="px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
-                >
-                  Back to Approval
-                </button>
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center space-x-2 text-sm"
-                  >
-                    <XCircle size={16} />
-                    <span>Confirm Rejection</span>
-                  </button>
-                </div>
-              </div>
-            </form>
-          )}
-        </div>
       </div>
     </div>
   );

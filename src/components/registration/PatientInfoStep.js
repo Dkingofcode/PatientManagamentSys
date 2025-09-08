@@ -1,0 +1,217 @@
+import React, { useState } from "react";
+function PatientInfoStep({ data, updateData, onNext, onPrev, }) {
+    const [patientInfo, setPatientInfo] = useState({
+        name: data.patientInfo?.name || "",
+        email: data.patientInfo?.email || "",
+        phone: data.patientInfo?.phone || "",
+        dateOfBirth: data.patientInfo?.dateOfBirth || "",
+        gender: data.patientInfo?.gender || "",
+        address: data.patientInfo?.address || "",
+        emergencyContactName: data.patientInfo?.emergencyContact?.name || "",
+        emergencyContactPhone: data.patientInfo?.emergencyContact?.phone || "",
+        emergencyContactRelationship: data.patientInfo?.emergencyContact?.relationship || "",
+        insuranceProvider: data.patientInfo?.insurance?.provider || "",
+        policyNumber: data.patientInfo?.insurance?.policyNumber || "",
+        groupNumber: data.patientInfo?.insurance?.groupNumber || "",
+        ...data.patientInfo,
+    });
+    const [errors, setErrors] = useState({});
+    const [age, setAge] = useState(""); // Age state
+    const validateForm = () => {
+        const newErrors = {};
+        if (!patientInfo.name.trim()) {
+            newErrors.name = "Full name is required";
+        }
+        if (!patientInfo.email.trim()) {
+            newErrors.email = "Email is required";
+        }
+        else if (!/\S+@\S+\.\S+/.test(patientInfo.email)) {
+            newErrors.email = "Email is invalid";
+        }
+        if (!patientInfo.phone.trim()) {
+            newErrors.phone = "Phone number is required";
+        }
+        if (!patientInfo.dateOfBirth) {
+            newErrors.dateOfBirth = "Date of birth is required";
+        }
+        if (!patientInfo.gender) {
+            newErrors.gender = "Gender is required";
+        }
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+    const handleInputChange = (field, value) => {
+        setPatientInfo((prev) => ({ ...prev, [field]: value }));
+        // Calculate age when DOB changes
+        if (field === "dateOfBirth") {
+            const dob = new Date(value);
+            const today = new Date();
+            let calculatedAge = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            if (monthDiff < 0 ||
+                (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                calculatedAge--;
+            }
+            setAge(isNaN(calculatedAge) ? "" : calculatedAge);
+        }
+        // Clear error
+        if (errors[field]) {
+            setErrors((prev) => ({ ...prev, [field]: "" }));
+        }
+    };
+    const handleNext = () => {
+        if (validateForm()) {
+            updateData({
+                patientInfo: {
+                    ...patientInfo,
+                    category: data.category,
+                    registeredBy: "uiytrety",
+                    registeredById: "987689",
+                    registrationDate: new Date().toISOString(),
+                    emergencyContact: {
+                        name: patientInfo.emergencyContactName,
+                        phone: patientInfo.emergencyContactPhone,
+                        relationship: patientInfo.emergencyContactRelationship,
+                    },
+                    insurance: {
+                        provider: patientInfo.insuranceProvider,
+                        policyNumber: patientInfo.policyNumber,
+                        groupNumber: patientInfo.groupNumber,
+                    },
+                },
+            });
+            onNext();
+        }
+    };
+    return (<div>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Patient Information
+        </h2>
+        <p className="text-gray-600">Please provide the patient's details</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Full Name *
+          </label>
+          <input type="text" value={patientInfo.name} onChange={(e) => handleInputChange("name", e.target.value)} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? "border-red-500" : "border-gray-300"}`} placeholder="Enter full name"/>
+          {errors.name && (<p className="text-red-500 text-sm mt-1">{errors.name}</p>)}
+        </div>
+
+        {/* Email */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Email Address *
+          </label>
+          <input type="email" value={patientInfo.email} onChange={(e) => handleInputChange("email", e.target.value)} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? "border-red-500" : "border-gray-300"}`} placeholder="Enter email address"/>
+          {errors.email && (<p className="text-red-500 text-sm mt-1">{errors.email}</p>)}
+        </div>
+
+        {/* Phone */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Phone Number *
+          </label>
+          <input type="tel" value={patientInfo.phone} onChange={(e) => handleInputChange("phone", e.target.value)} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.phone ? "border-red-500" : "border-gray-300"}`} placeholder="Enter phone number"/>
+          {errors.phone && (<p className="text-red-500 text-sm mt-1">{errors.phone}</p>)}
+        </div>
+
+        {/* DOB + Age + Gender in same row */}
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* DOB */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date of Birth *
+            </label>
+            <input type="date" value={patientInfo.dateOfBirth} onChange={(e) => handleInputChange("dateOfBirth", e.target.value)} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.dateOfBirth ? "border-red-500" : "border-gray-300"}`}/>
+            {errors.dateOfBirth && (<p className="text-red-500 text-sm mt-1">{errors.dateOfBirth}</p>)}
+          </div>
+
+          {/* Age */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Age
+            </label>
+            <input type="text" value={age !== "" ? `${age} years` : ""} readOnly placeholder="Auto-calculated" className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700"/>
+          </div>
+
+          {/* Gender */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Gender *
+            </label>
+            <select value={patientInfo.gender} onChange={(e) => handleInputChange("gender", e.target.value)} className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.gender ? "border-red-500" : "border-gray-300"}`}>
+              <option value="">Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+            {errors.gender && (<p className="text-red-500 text-sm mt-1">{errors.gender}</p>)}
+          </div>
+        </div>
+
+        {/* Address */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Address
+          </label>
+          <input type="text" value={patientInfo.address} onChange={(e) => handleInputChange("address", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter address (optional)"/>
+        </div>
+      </div>
+
+      {/* Emergency Contact */}
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Emergency Contact
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <input type="text" placeholder="Emergency contact name" value={patientInfo.emergencyContactName} onChange={(e) => handleInputChange("emergencyContactName", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg"/>
+          <input type="tel" placeholder="Emergency contact phone" value={patientInfo.emergencyContactPhone} onChange={(e) => handleInputChange("emergencyContactPhone", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg"/>
+          <select value={patientInfo.emergencyContactRelationship} onChange={(e) => handleInputChange("emergencyContactRelationship", e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
+            <option value="">Select relationship</option>
+            <option value="spouse">Spouse</option>
+            <option value="parent">Parent</option>
+            <option value="child">Child</option>
+            <option value="sibling">Sibling</option>
+            <option value="friend">Friend</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Registration Info */}
+      <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+        <h4 className="text-sm font-medium text-blue-900 mb-2">
+          Registration Details
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <span className="text-blue-700">Registered by:</span>
+            <span className="ml-2 font-medium text-blue-900">
+              juwugahajg 989
+            </span>
+          </div>
+          <div>
+            <span className="text-blue-700">Date:</span>
+            <span className="ml-2 font-medium text-blue-900">
+              {new Date().toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex justify-between">
+        <button onClick={onPrev} className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+          Previous
+        </button>
+        <button onClick={handleNext} className="px-6 py-2 bg-purple-700 text-white rounded-lg hover:bg-purple-800">
+          Next Step
+        </button>
+      </div>
+    </div>);
+}
+export default PatientInfoStep;

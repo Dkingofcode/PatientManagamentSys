@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import Layout from "../components/Layout";
 import { Calendar, FileText, Clock, Download, Shield, Eye } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext.tsx";
+import axios from "axios";
+
 function PatientDashboard() {
   // const { user } = useAuth();
   const [show2FA, setShow2FA] = useState(false);
@@ -9,6 +11,7 @@ function PatientDashboard() {
   const [activeFilter, setActiveFilter] = useState<
     "all" | "upcoming" | "completed" | "pending" | "ready"
   >("all");
+ const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const { user } = useAuth();
   const appointments = [
     {
@@ -46,20 +49,70 @@ function PatientDashboard() {
     },
   ];
 
-  const handleViewResults = (resultId: string) => {
-    setShow2FA(true);
-    console.log(resultId);
-  };
+  // const handleViewResults = (resultId: string) => {
+  //   setShow2FA(true);
+  //   console.log(resultId);
+  // };
 
-  const verify2FA = () => {
-    if (verificationCode === "123456") {
-      setShow2FA(false);
-      setVerificationCode("");
-      alert("Results downloaded successfully!");
-    } else {
-      alert("Invalid verification code. Try: 123456");
-    }
-  };
+  // const verify2FA = () => {
+  //   if (verificationCode === "123456") {
+  //     setShow2FA(false);
+  //     setVerificationCode("");
+  //     alert("Results downloaded successfully!");
+  //   } else {
+  //     alert("Invalid verification code. Try: 123456");
+  //   }
+  // };
+
+  const token = localStorage.getItem("token");
+
+// Step 1: Request OTP
+const handleViewResults = async (resultId: string) => {
+  try {
+    await axios.post(
+      `http://localhost:8000/api/results/${resultId}/request-access`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    setActiveResultId(resultId);
+    setShow2FA(true);
+  } catch (err) {
+    console.error("Error requesting OTP:", err);
+    alert("Could not request OTP. Please try again.");
+  }
+};
+
+// Step 2: Verify OTP & Download Result
+const verify2FA = async () => {
+  if (!activeResultId) return;
+
+  try {
+    const response = await axios.post(
+      `http://localhost:8000/api/results/${activeResultId}/access`,
+      { accessCode: verificationCode },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob", // Important for PDF
+      }
+    );
+
+    // Download PDF
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `result_${activeResultId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+
+    // Reset modal
+    setShow2FA(false);
+    setVerificationCode("");
+    setActiveResultId(null);
+  } catch (err) {
+    console.error("Error verifying OTP:", err);
+    alert("Invalid or expired code. Please request again.");
+  }
+};
 
   const stats = [
     {

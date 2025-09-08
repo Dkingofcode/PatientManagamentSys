@@ -10,7 +10,7 @@ export type UserRole =
   | "lab-technician"
   | "sonologist"
   | "radiologist"
-  | "front-desk"
+  | "front_desk"
   | "patient";
 
 interface User {
